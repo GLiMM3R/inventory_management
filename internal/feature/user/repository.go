@@ -3,17 +3,18 @@ package user
 import (
 	"errors"
 
+	"inverntory_management/internal/database/schema"
 	"inverntory_management/internal/exception"
 
 	"gorm.io/gorm"
 )
 
 type UserRepositoryImpl interface {
-	GetAll(page, limit int) ([]User, int64, error)
-	FindByID(user_id string) (*User, error)
-	FindByUsername(username string) (*User, error)
-	Create(user *User) error
-	Update(user *User) error
+	GetAll(page, limit int) ([]schema.User, int64, error)
+	FindByID(user_id string) (*schema.User, error)
+	FindByUsername(username string) (*schema.User, error)
+	Create(user *schema.User) error
+	Update(user *schema.User) error
 }
 
 type userRepository struct {
@@ -25,8 +26,8 @@ func NewUserRepository(db *gorm.DB) UserRepositoryImpl {
 }
 
 // Create implements UserRepository.
-func (r *userRepository) Create(user *User) error {
-	if err := r.db.Create(user).Error; err != nil {
+func (r *userRepository) Create(user *schema.User) error {
+	if err := r.db.Create(&user).Error; err != nil {
 		if errors.Is(gorm.ErrDuplicatedKey, err) {
 			return exception.ErrDuplicateEntry
 		}
@@ -37,10 +38,10 @@ func (r *userRepository) Create(user *User) error {
 }
 
 // FindByID implements UserRepository.
-func (r *userRepository) FindByID(user_id string) (*User, error) {
-	var user *User
+func (r *userRepository) FindByID(user_id string) (*schema.User, error) {
+	var user *schema.User
 
-	if err := r.db.Where("user_id = ?", user_id).First(&user).Error; err != nil {
+	if err := r.db.First(&user, "user_id = ?", user_id).Error; err != nil {
 		if errors.Is(err, gorm.ErrRecordNotFound) {
 			return nil, exception.ErrNotFound
 		}
@@ -51,8 +52,8 @@ func (r *userRepository) FindByID(user_id string) (*User, error) {
 }
 
 // FindByUsername implements UserRepository.
-func (r *userRepository) FindByUsername(username string) (*User, error) {
-	var user *User
+func (r *userRepository) FindByUsername(username string) (*schema.User, error) {
+	var user *schema.User
 
 	if err := r.db.First(&user, "username = ?", username).Error; err != nil {
 		if errors.Is(err, gorm.ErrRecordNotFound) {
@@ -65,12 +66,12 @@ func (r *userRepository) FindByUsername(username string) (*User, error) {
 }
 
 // GetAll implements UserRepository.
-func (r *userRepository) GetAll(page int, limit int) ([]User, int64, error) {
-	var data []User
+func (r *userRepository) GetAll(page int, limit int) ([]schema.User, int64, error) {
+	var data []schema.User
 	var total int64
 	offset := (page - 1) * limit
 
-	query := r.db.Model(&User{})
+	query := r.db.Model(&schema.User{})
 
 	if err := query.Count(&total).Limit(limit).Offset(offset).Find(&data).Error; err != nil {
 		return nil, 0, err
@@ -80,8 +81,8 @@ func (r *userRepository) GetAll(page int, limit int) ([]User, int64, error) {
 }
 
 // Update implements UserRepository.
-func (r *userRepository) Update(user *User) error {
-	if err := r.db.Save(user).Error; err != nil {
+func (r *userRepository) Update(user *schema.User) error {
+	if err := r.db.Save(&user).Error; err != nil {
 		if errors.Is(gorm.ErrDuplicatedKey, err) {
 			return exception.ErrDuplicateEntry
 		}

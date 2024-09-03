@@ -4,6 +4,7 @@ import (
 	"inverntory_management/config"
 	"inverntory_management/internal/database"
 	"inverntory_management/internal/feature/branch"
+	"inverntory_management/internal/feature/inventory"
 	user "inverntory_management/internal/feature/user"
 	"inverntory_management/internal/utils"
 	"log"
@@ -36,14 +37,17 @@ func Initialize() (*echo.Echo, error) {
 	// Initialize Repositories
 	userRepo := user.NewUserRepository(database.DB)
 	branchRepo := branch.NewBranchRepository(database.DB)
+	inventoryRepo := inventory.NewInventoryRepository(database.DB)
 
 	// Initialize Services
 	userService := user.NewUserService(userRepo)
 	branchService := branch.NewBranchService(branchRepo)
+	inventoryService := inventory.NewInventoryService(inventoryRepo)
 
 	// Initialize Routes
 	user.InitUserRoutes(e, userService)
 	branch.InitBranchRoutes(e, branchService)
+	inventory.InitInventoryRoutes(e, inventoryService)
 
 	return e, nil
 }

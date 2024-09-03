@@ -1,10 +1,14 @@
 package branch
 
-import "github.com/google/uuid"
+import (
+	"inverntory_management/internal/database/schema"
+
+	"github.com/google/uuid"
+)
 
 type BranchServiceImpl interface {
-	GetAll(page, limit int) ([]Branch, int64, error)
-	FindByID(branch_id string) (*Branch, error)
+	GetAll(page, limit int) ([]schema.Branch, int64, error)
+	FindByID(branch_id string) (*schema.Branch, error)
 	Create(dto BranchCreateDto) error
 	Update(branch_id string, dto BranchUpdateDto) error
 }
@@ -18,7 +22,7 @@ func NewBranchService(branchRepo BranchRepositoryImpl) BranchServiceImpl {
 }
 
 // GetAll implements BranchServiceImpl.
-func (s *branchService) GetAll(page int, limit int) ([]Branch, int64, error) {
+func (s *branchService) GetAll(page int, limit int) ([]schema.Branch, int64, error) {
 	users, total, err := s.branchRepo.GetAll(page, limit)
 	if err != nil {
 		return nil, 0, err
@@ -29,7 +33,7 @@ func (s *branchService) GetAll(page int, limit int) ([]Branch, int64, error) {
 
 // Create implements BranchServiceImpl.
 func (s *branchService) Create(dto BranchCreateDto) error {
-	newBranch := &Branch{
+	newBranch := &schema.Branch{
 		BranchID: uuid.NewString(),
 		Name:     dto.Name,
 	}
@@ -42,7 +46,7 @@ func (s *branchService) Create(dto BranchCreateDto) error {
 }
 
 // FindByID implements BranchServiceImpl.
-func (s *branchService) FindByID(branch_id string) (*Branch, error) {
+func (s *branchService) FindByID(branch_id string) (*schema.Branch, error) {
 	branch, err := s.branchRepo.FindByID(branch_id)
 	if err != nil {
 		return nil, err

@@ -15,6 +15,12 @@ func HandleError(c echo.Context, err error) error {
 			Status:   http.StatusNotFound,
 			Messages: ErrNotFound.Error(),
 		})
+	case ErrDuplicateEntry:
+		return c.JSON(http.StatusBadRequest, types.Response{
+			Data:     nil,
+			Status:   http.StatusBadRequest,
+			Messages: ErrDuplicateEntry.Error(),
+		})
 	default:
 		return c.JSON(http.StatusInternalServerError, types.Response{
 			Data:     nil,

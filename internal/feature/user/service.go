@@ -1,6 +1,7 @@
 package user
 
 import (
+	"inverntory_management/internal/database/schema"
 	"inverntory_management/internal/exception"
 
 	"github.com/google/uuid"
@@ -8,9 +9,9 @@ import (
 )
 
 type UserServiceImpl interface {
-	GetAll(page, limit int) ([]User, int64, error)
-	FindByID(user_id string) (*User, error)
-	FindByUsername(username string) (*User, error)
+	GetAll(page, limit int) ([]schema.User, int64, error)
+	FindByID(user_id string) (*schema.User, error)
+	FindByUsername(username string) (*schema.User, error)
 	Create(dto UserCreateDto) error
 }
 
@@ -23,7 +24,7 @@ func NewUserService(userRepo UserRepositoryImpl) UserServiceImpl {
 }
 
 // FindByID implements Service.
-func (s *userService) FindByID(user_id string) (*User, error) {
+func (s *userService) FindByID(user_id string) (*schema.User, error) {
 	user, err := s.userRepo.FindByID(user_id)
 	if err != nil {
 		return nil, err
@@ -33,7 +34,7 @@ func (s *userService) FindByID(user_id string) (*User, error) {
 }
 
 // FindByUsername implements Service.
-func (s *userService) FindByUsername(username string) (*User, error) {
+func (s *userService) FindByUsername(username string) (*schema.User, error) {
 	user, err := s.userRepo.FindByUsername(username)
 	if err != nil {
 		return nil, err
@@ -43,7 +44,7 @@ func (s *userService) FindByUsername(username string) (*User, error) {
 }
 
 // GetAll implements Service.
-func (s *userService) GetAll(page int, limit int) ([]User, int64, error) {
+func (s *userService) GetAll(page int, limit int) ([]schema.User, int64, error) {
 	users, total, err := s.userRepo.GetAll(page, limit)
 	if err != nil {
 		return nil, 0, err
@@ -59,7 +60,7 @@ func (s *userService) Create(dto UserCreateDto) error {
 		return exception.NewAppError("HASH_ERROR", "Failed to hash password", err)
 	}
 
-	newUser := &User{
+	newUser := &schema.User{
 		UserID:   uuid.NewString(),
 		Username: dto.Username,
 		Password: string(hashedPassword),
