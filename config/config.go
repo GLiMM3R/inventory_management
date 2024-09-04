@@ -1,7 +1,9 @@
 package config
 
 import (
+	"fmt"
 	"log"
+	"os"
 
 	"github.com/spf13/viper"
 )
@@ -20,9 +22,28 @@ type Config struct {
 	REDIS_ADDR         string `mapstructure:"REDIS_ADDR"`
 	REDIS_PWD          string `mapstructure:"DB_HOST"`
 	REDIS_DB           int    `mapstructure:"REDIS_DB"`
+	PRIVATE_KEY        []byte
+	PUBLIC_KEY         []byte
 }
 
 var AppConfig Config
+
+func init() {
+	fmt.Println("Initializing configuration...")
+	privateBytes, err := os.ReadFile("keys/private.pem")
+	if err != nil {
+		log.Fatalf("Error reading private key: %v", err)
+	}
+
+	AppConfig.PRIVATE_KEY = privateBytes
+
+	publicBytes, err := os.ReadFile("keys/public.pem")
+	if err != nil {
+		log.Fatalf("Error reading public key: %v", err)
+	}
+
+	AppConfig.PUBLIC_KEY = publicBytes
+}
 
 func LoadConfig(path string) {
 	viper.AddConfigPath(path)

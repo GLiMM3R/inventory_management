@@ -18,8 +18,8 @@ func DecodeFromSHA256(input string) ([]byte, error) {
 	return hex.DecodeString(input)
 }
 
-func EncodeToAES256(input, key string) (string, error) {
-	block, err := aes.NewCipher([]byte(key))
+func EncodeToAES256(input string, key []byte) (string, error) {
+	block, err := aes.NewCipher(key)
 	if err != nil {
 		return "", err
 	}
@@ -31,7 +31,7 @@ func EncodeToAES256(input, key string) (string, error) {
 	return hex.EncodeToString(ciphertext), nil
 }
 
-func DecodeFromAES256(input, key string) (string, error) {
+func DecodeFromAES256(input string, key []byte) (string, error) {
 	ciphertext, err := hex.DecodeString(input)
 	if err != nil {
 		return "", err
