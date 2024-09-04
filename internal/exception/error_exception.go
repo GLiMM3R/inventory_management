@@ -11,6 +11,10 @@ var (
 	ErrInternal             = errors.New("internal server error")
 	ErrUnauthorized         = errors.New("unauthorized access")
 	ErrInsufficientQuantity = errors.New("insufficient quantity")
+	ErrInvalidToken         = errors.New("invalid token")
+	ErrTokenNotFound        = errors.New("token not found")
+	ErrSigningMethodFailed  = errors.New("signing method failed")
+	ErrParseClaimed         = errors.New("failed to parse claim")
 )
 
 type AppError struct {

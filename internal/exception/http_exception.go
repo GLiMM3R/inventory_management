@@ -27,6 +27,18 @@ func HandleError(c echo.Context, err error) error {
 			Status:   http.StatusBadRequest,
 			Messages: ErrInsufficientQuantity.Error(),
 		})
+	case ErrInvalidToken:
+		return c.JSON(http.StatusUnauthorized, types.Response{
+			Data:     nil,
+			Status:   http.StatusUnauthorized,
+			Messages: ErrInvalidToken.Error(),
+		})
+	case ErrTokenNotFound:
+		return c.JSON(http.StatusUnauthorized, types.Response{
+			Data:     nil,
+			Status:   http.StatusUnauthorized,
+			Messages: ErrTokenNotFound.Error(),
+		})
 	default:
 		return c.JSON(http.StatusInternalServerError, types.Response{
 			Data:     nil,
