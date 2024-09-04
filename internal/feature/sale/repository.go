@@ -25,13 +25,39 @@ func NewSaleRepository(db *gorm.DB) SaleRepositoryImpl {
 
 // Create implements PriceRepositoryImpl.
 func (r *saleRepository) Create(sale *schema.Sale) error {
-	if err := r.db.Create(&sale).Error; err != nil {
-		if errors.Is(gorm.ErrDuplicatedKey, err) {
-			return exception.ErrDuplicateEntry
+	return r.db.Transaction(func(tx *gorm.DB) error {
+		var existingInventory schema.Inventory
+
+		if err := r.db.First(&existingInventory, "inventory_id = ?", sale.InventoryID).Error; err != nil {
+			if errors.Is(err, gorm.ErrRecordNotFound) {
+				return exception.ErrNotFound
+			}
+			return exception.ErrInternal
 		}
-		return exception.ErrInternal
-	}
-	return nil
+
+		if sale.Quantity > existingInventory.Quantity {
+			if err := tx.Model(&schema.Inventory{}).Where("inventory_id = ?", sale.InventoryID).
+				Update("status", "sold").Error; err != nil {
+				return exception.ErrInternal
+			}
+			return exception.ErrInsufficientQuantity
+		}
+
+		quantityFloat := float64(sale.Quantity)
+		sale.TotalPrice = quantityFloat * existingInventory.Price
+
+		if err := tx.Model(&schema.Inventory{}).Where("inventory_id = ?", sale.InventoryID).UpdateColumn("quantity", gorm.Expr("quantity - ?", sale.Quantity)).Error; err != nil {
+			return exception.ErrInternal
+		}
+
+		if err := tx.Create(&sale).Error; err != nil {
+			if errors.Is(gorm.ErrDuplicatedKey, err) {
+				return exception.ErrDuplicateEntry
+			}
+			return exception.ErrInternal
+		}
+		return nil
+	})
 }
 
 // FindByID implements PriceRepositoryImpl.

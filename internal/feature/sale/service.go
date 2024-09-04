@@ -2,6 +2,7 @@ package sale
 
 import (
 	"inverntory_management/internal/database/schema"
+	"time"
 
 	"github.com/google/uuid"
 )
@@ -49,6 +50,7 @@ func (s *saleService) Create(dto SaleCreateDto) error {
 		SaleID:      uuid.NewString(),
 		InventoryID: dto.InventoryID,
 		Quantity:    dto.Quantity,
+		SaleDate:    time.Now().Unix(),
 	}
 
 	if err := s.saleRepo.Create(newPrice); err != nil {

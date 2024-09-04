@@ -21,6 +21,12 @@ func HandleError(c echo.Context, err error) error {
 			Status:   http.StatusBadRequest,
 			Messages: ErrDuplicateEntry.Error(),
 		})
+	case ErrInsufficientQuantity:
+		return c.JSON(http.StatusBadRequest, types.Response{
+			Data:     nil,
+			Status:   http.StatusBadRequest,
+			Messages: ErrInsufficientQuantity.Error(),
+		})
 	default:
 		return c.JSON(http.StatusInternalServerError, types.Response{
 			Data:     nil,
