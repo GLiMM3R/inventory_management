@@ -62,6 +62,7 @@ func (s *userService) Create(dto UserCreateDto) error {
 
 	newUser := &schema.User{
 		UserID:   uuid.NewString(),
+		Email:    dto.Email,
 		Username: dto.Username,
 		Password: string(hashedPassword),
 	}

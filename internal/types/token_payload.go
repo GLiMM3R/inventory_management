@@ -1,6 +1,6 @@
 package types
 
 type TokenPayload struct {
-	UserID   uint
+	UserID   string
 	Username string
 }

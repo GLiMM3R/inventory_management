@@ -4,7 +4,6 @@ import (
 	"inverntory_management/config"
 	"inverntory_management/internal/exception"
 	"inverntory_management/internal/types"
-	"strconv"
 	"time"
 
 	"github.com/dgrijalva/jwt-go"
@@ -14,8 +13,8 @@ func GenerateAccessToken(payload types.TokenPayload) (string, error) {
 	secret := config.AppConfig.ACCESS_SECRET
 
 	claims := &types.UserClaims{}
-	claims.Subject = strconv.FormatUint(uint64(payload.UserID), 10)
-	claims.Name = payload.Username
+	claims.Subject = payload.UserID
+	claims.Username = payload.Username
 	claims.IssuedAt = time.Now().Unix()
 	claims.ExpiresAt = time.Now().Add(time.Duration(config.AppConfig.ACCESS_EXPIRATION) * time.Second).Unix()
 
@@ -30,11 +29,10 @@ func GenerateAccessToken(payload types.TokenPayload) (string, error) {
 
 func GenerateRefreshToken(userID string) (string, error) {
 	secret := config.AppConfig.REFRESH_SECRET
-
 	claims := &types.UserClaims{}
 	claims.Subject = userID
 	claims.IssuedAt = time.Now().Unix()
-	claims.ExpiresAt = time.Now().Add(time.Duration(config.AppConfig.REDIS_DB) * time.Second).Unix()
+	claims.ExpiresAt = time.Now().Add(time.Duration(config.AppConfig.REFRESH_EXPIRATION) * time.Second).Unix()
 
 	token := jwt.NewWithClaims(jwt.SigningMethodHS256, claims)
 	tokenString, err := token.SignedString([]byte(secret))
@@ -70,13 +68,16 @@ func verifyToken(tokenString string, secretKey []byte) (*types.UserClaims, error
 		if _, ok := token.Method.(*jwt.SigningMethodHMAC); !ok {
 			return nil, exception.ErrSigningMethodFailed
 		}
+		// Ensure the signing method is HS256
+		if token.Method != jwt.SigningMethodHS256 {
+			return nil, exception.ErrSigningMethodFailed
+		}
 		return secretKey, nil
 	})
 
 	if err != nil {
-		return nil, err
+		return nil, exception.ErrInternal
 	}
-
 	if !token.Valid {
 		return nil, exception.ErrInvalidToken
 	}

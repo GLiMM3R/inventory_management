@@ -15,6 +15,8 @@ var (
 	ErrTokenNotFound        = errors.New("token not found")
 	ErrSigningMethodFailed  = errors.New("signing method failed")
 	ErrParseClaimed         = errors.New("failed to parse claim")
+	ErrInvalidCredentials   = errors.New("invalid credentials")
+	ErrTokenExpired         = errors.New("invalid or expired refresh token")
 )
 
 type AppError struct {

@@ -3,6 +3,7 @@ package app
 import (
 	"inverntory_management/config"
 	"inverntory_management/internal/database"
+	"inverntory_management/internal/feature/auth"
 	"inverntory_management/internal/feature/branch"
 	"inverntory_management/internal/feature/inventory"
 	"inverntory_management/internal/feature/inventory_transfer"
@@ -10,19 +11,12 @@ import (
 	"inverntory_management/internal/feature/sale"
 	user "inverntory_management/internal/feature/user"
 	"inverntory_management/internal/utils"
-	"log"
-	"os"
 
 	"github.com/labstack/echo"
 	"github.com/labstack/echo/middleware"
 )
 
 func Initialize() (*echo.Echo, error) {
-	dir, err := os.Getwd()
-	if err != nil {
-		log.Fatalf("Error getting working directory: %v", err)
-	}
-	log.Printf("Working directory: %s", dir)
 	// Load Configuration
 	config.LoadConfig(".")
 
@@ -36,6 +30,7 @@ func Initialize() (*echo.Echo, error) {
 
 	// Initialize database
 	database.InitPostgres()
+	redisClient := database.InitRedis()
 
 	// Initialize Repositories
 	userRepo := user.NewUserRepository(database.DB)
@@ -46,6 +41,7 @@ func Initialize() (*echo.Echo, error) {
 	transferRepo := inventory_transfer.NewInventoryTransferRepository(database.DB)
 
 	// Initialize Services
+	authService := auth.NewAuthService(userRepo, redisClient)
 	userService := user.NewUserService(userRepo)
 	branchService := branch.NewBranchService(branchRepo)
 	inventoryService := inventory.NewInventoryService(inventoryRepo)
@@ -54,6 +50,7 @@ func Initialize() (*echo.Echo, error) {
 	transferService := inventory_transfer.NewInventoryService(transferRepo)
 
 	// Initialize Routes
+	auth.InitAuthRoutes(e, authService)
 	user.InitUserRoutes(e, userService)
 	branch.InitBranchRoutes(e, branchService)
 	inventory.InitInventoryRoutes(e, inventoryService)

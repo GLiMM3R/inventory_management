@@ -5,6 +5,7 @@ import "gorm.io/gorm"
 type User struct {
 	ID          uint           `json:"-" gorm:"primaryKey;autoIncrement:true;column:id"`
 	UserID      string         `json:"user_id" gorm:"primaryKey;unique;column:user_id"`
+	Email       string         `json:"email" gorm:"unique;column:email"`
 	Username    string         `json:"username" gorm:"unique;column:username"`
 	Password    string         `json:"-" gorm:"column:password"`
 	IsTwoFactor bool           `json:"-" gorm:"column:is_two_factor"`
