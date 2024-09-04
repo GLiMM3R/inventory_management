@@ -5,11 +5,12 @@ import (
 )
 
 var (
-	ErrNotFound       = errors.New("record not found")
-	ErrDuplicateEntry = errors.New("duplicate entry")
-	ErrInvalidData    = errors.New("invalid data")
-	ErrInternal       = errors.New("internal server error")
-	ErrUnauthorized   = errors.New("unauthorized access")
+	ErrNotFound             = errors.New("record not found")
+	ErrDuplicateEntry       = errors.New("duplicate entry")
+	ErrInvalidData          = errors.New("invalid data")
+	ErrInternal             = errors.New("internal server error")
+	ErrUnauthorized         = errors.New("unauthorized access")
+	ErrInsufficientQuantity = errors.New("insufficient quantity")
 )
 
 type AppError struct {

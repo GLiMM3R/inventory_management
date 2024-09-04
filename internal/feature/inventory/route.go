@@ -8,5 +8,5 @@ func InitInventoryRoutes(e *echo.Echo, service InventoryServiceImpl) {
 	r.GET("", h.GetInventories)
 	r.GET("/:id", h.GetInventoryByID)
 	r.POST("", h.CreateInventory)
-	r.PATCH("/:id", h.UpdateBranch)
+	r.PATCH("/:id", h.UpdateInventory)
 }

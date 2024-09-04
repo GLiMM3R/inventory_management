@@ -1,7 +1,6 @@
 package inventory
 
 import (
-	"fmt"
 	"inverntory_management/internal/database/schema"
 
 	"github.com/google/uuid"
@@ -50,6 +49,7 @@ func (s *inventoryService) Create(dto InventoryCreateDto) error {
 		Name:        dto.Name,
 		SKU:         dto.SKU,
 		Quantity:    dto.Quantity,
+		Price:       dto.Price,
 		Status:      ACTIVE,
 	}
 
@@ -67,16 +67,29 @@ func (s *inventoryService) Update(inventory_id string, dto InventoryUpdateDto) e
 		return err
 	}
 
-	existingInventory.Name = *dto.Name
-	existingInventory.SKU = *dto.SKU
-	existingInventory.Quantity = *dto.Quantity
-	existingInventory.Status = *dto.Status
+	if dto.Name != nil {
+		existingInventory.Name = *dto.Name
+	}
 
-	fmt.Println(existingInventory)
+	if dto.SKU != nil {
+		existingInventory.SKU = *dto.SKU
+	}
 
-	// if err := s.inventoryRepo.Update(existingInventory); err != nil {
-	// 	return err
-	// }
+	if dto.Quantity != nil {
+		existingInventory.Quantity = *dto.Quantity
+	}
+
+	if dto.Price != nil {
+		existingInventory.Price = *dto.Price
+	}
+
+	if dto.Status != nil {
+		existingInventory.Status = *dto.Status
+	}
+
+	if err := s.inventoryRepo.Update(existingInventory); err != nil {
+		return err
+	}
 
 	return nil
 }

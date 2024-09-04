@@ -77,7 +77,7 @@ func (h *InventoryHandler) CreateInventory(c echo.Context) error {
 	})
 }
 
-func (h *InventoryHandler) UpdateBranch(c echo.Context) error {
+func (h *InventoryHandler) UpdateInventory(c echo.Context) error {
 	inventory_id := c.Param("id")
 
 	dto := new(InventoryUpdateDto)
