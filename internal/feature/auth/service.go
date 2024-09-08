@@ -2,6 +2,7 @@ package auth
 
 import (
 	"context"
+	"fmt"
 	"inverntory_management/config"
 	"inverntory_management/internal/exception"
 	"inverntory_management/internal/feature/user"
@@ -46,6 +47,7 @@ func (s *authService) GetRefreshToken(token string, user *types.UserClaims) (*Re
 
 	accessToken, err := service.GenerateAccessToken(types.TokenPayload{UserID: user.Subject, Username: user.Username})
 	if err != nil {
+		fmt.Println("error here")
 		return nil, exception.ErrInternal
 	}
 
@@ -79,7 +81,7 @@ func (s *authService) Login(request *AuthRequest) (*AuthResponse, error) {
 
 	user, err := s.userRepo.FindByUsername(request.Username)
 	if err != nil {
-		return nil, err
+		return nil, exception.ErrInvalidCredentials
 	}
 
 	if err := bcrypt.CompareHashAndPassword([]byte(user.Password), []byte(request.Password)); err != nil {

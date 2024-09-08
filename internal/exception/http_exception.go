@@ -40,9 +40,9 @@ func HandleError(c echo.Context, err error) error {
 			Messages: ErrTokenNotFound.Error(),
 		})
 	case ErrInvalidCredentials:
-		return c.JSON(http.StatusUnauthorized, types.Response{
+		return c.JSON(http.StatusBadRequest, types.Response{
 			Data:     nil,
-			Status:   http.StatusUnauthorized,
+			Status:   http.StatusBadRequest,
 			Messages: ErrInvalidCredentials.Error(),
 		})
 	case ErrTokenExpired:
@@ -50,6 +50,12 @@ func HandleError(c echo.Context, err error) error {
 			Data:     nil,
 			Status:   http.StatusUnauthorized,
 			Messages: ErrTokenExpired.Error(),
+		})
+	case ErrAuth:
+		return c.JSON(http.StatusUnauthorized, types.Response{
+			Data:     nil,
+			Status:   http.StatusUnauthorized,
+			Messages: ErrAuth.Error(),
 		})
 	default:
 		return c.JSON(http.StatusInternalServerError, types.Response{

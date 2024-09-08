@@ -86,7 +86,7 @@ func verifyAccessToken(tokenString string, secret []byte) (*types.UserClaims, er
 	})
 
 	if err != nil {
-		return nil, exception.ErrInternal
+		return nil, exception.ErrInvalidToken
 	}
 	if !token.Valid {
 		return nil, exception.ErrInvalidToken
@@ -115,7 +115,7 @@ func verifyToken(tokenString string, secretKey []byte) (*types.UserClaims, error
 	})
 
 	if err != nil {
-		return nil, exception.ErrInternal
+		return nil, exception.ErrInvalidToken
 	}
 	if !token.Valid {
 		return nil, exception.ErrInvalidToken
