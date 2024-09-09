@@ -2,23 +2,27 @@ package inventory
 
 import (
 	"inverntory_management/internal/database/schema"
+	"inverntory_management/internal/feature/user"
+	"inverntory_management/internal/types"
+	"inverntory_management/internal/utils"
 
 	"github.com/google/uuid"
 )
 
 type InventoryServiceImpl interface {
-	GetAll(page, limit int) ([]schema.Inventory, int64, error)
+	GetAll(page, limit int, userClaims *types.UserClaims) ([]schema.Inventory, int64, error)
 	FindByID(inventory_id string) (*schema.Inventory, error)
-	Create(dto InventoryCreateDto) error
+	Create(dto InventoryCreateDto, userClaims *types.UserClaims) error
 	Update(inventory_id string, dto InventoryUpdateDto) error
 }
 
 type inventoryService struct {
 	inventoryRepo InventoryRepositoryImpl
+	userRepo      user.UserRepositoryImpl
 }
 
-func NewInventoryService(inventoryRepo InventoryRepositoryImpl) InventoryServiceImpl {
-	return &inventoryService{inventoryRepo: inventoryRepo}
+func NewInventoryService(inventoryRepo InventoryRepositoryImpl, userRepo user.UserRepositoryImpl) InventoryServiceImpl {
+	return &inventoryService{inventoryRepo: inventoryRepo, userRepo: userRepo}
 }
 
 // FindByID implements InventoryServiceImpl.
@@ -32,8 +36,13 @@ func (s *inventoryService) FindByID(inventory_id string) (*schema.Inventory, err
 }
 
 // GetAll implements InventoryServiceImpl.
-func (s *inventoryService) GetAll(page int, limit int) ([]schema.Inventory, int64, error) {
-	inventories, total, err := s.inventoryRepo.GetAll(page, limit)
+func (s *inventoryService) GetAll(page int, limit int, userClaims *types.UserClaims) ([]schema.Inventory, int64, error) {
+	user, err := s.userRepo.FindByID(userClaims.Subject)
+	if err != nil {
+		return nil, 0, err
+	}
+
+	inventories, total, err := s.inventoryRepo.GetAll(page, limit, user.BranchID)
 	if err != nil {
 		return nil, 0, err
 	}
@@ -42,12 +51,17 @@ func (s *inventoryService) GetAll(page int, limit int) ([]schema.Inventory, int6
 }
 
 // Create implements InventoryServiceImpl.
-func (s *inventoryService) Create(dto InventoryCreateDto) error {
+func (s *inventoryService) Create(dto InventoryCreateDto, userClaims *types.UserClaims) error {
+	user, err := s.userRepo.FindByID(userClaims.Subject)
+	if err != nil {
+		return err
+	}
+
 	newInventory := &schema.Inventory{
 		InventoryID: uuid.NewString(),
-		BranchID:    dto.BranchID,
+		BranchID:    user.BranchID,
 		Name:        dto.Name,
-		SKU:         dto.SKU,
+		SKU:         utils.GenerateSKU(dto.Name, 12, "SKU-"),
 		Quantity:    dto.Quantity,
 		Price:       dto.Price,
 		Status:      ACTIVE,
@@ -69,10 +83,6 @@ func (s *inventoryService) Update(inventory_id string, dto InventoryUpdateDto) e
 
 	if dto.Name != nil {
 		existingInventory.Name = *dto.Name
-	}
-
-	if dto.SKU != nil {
-		existingInventory.SKU = *dto.SKU
 	}
 
 	if dto.Quantity != nil {

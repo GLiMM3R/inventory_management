@@ -11,7 +11,7 @@ func InitUserRoutes(e *echo.Echo, service UserServiceImpl) {
 	r := e.Group("/users")
 	r.POST("", h.CreateUser)
 
-	protected := e.Group("/restricted")
+	protected := e.Group("restricted/users")
 	protected.Use(middleware.JWTAccessMiddleware)
 	protected.GET("", h.GetUsers)
 	protected.GET("/:username", h.GetUserByUsername)

@@ -2,6 +2,7 @@ package inventory
 
 import (
 	"inverntory_management/internal/exception"
+	"inverntory_management/internal/middleware"
 	"inverntory_management/internal/types"
 	"net/http"
 	"strconv"
@@ -18,6 +19,11 @@ func NewInventoryHandler(service InventoryServiceImpl) *InventoryHandler {
 }
 
 func (h *InventoryHandler) GetInventories(c echo.Context) error {
+	userClaims, err := middleware.ExtractUser(c)
+	if err != nil {
+		return exception.HandleError(c, err)
+	}
+
 	page, err := strconv.Atoi(c.QueryParam("page"))
 	if err != nil || page <= 0 {
 		page = 1
@@ -28,13 +34,13 @@ func (h *InventoryHandler) GetInventories(c echo.Context) error {
 		limit = 10
 	}
 
-	branches, total, err := h.service.GetAll(page, limit)
+	inventories, total, err := h.service.GetAll(page, limit, userClaims)
 	if err != nil {
 		return exception.HandleError(c, err)
 	}
 
 	return c.JSON(http.StatusOK, types.Response{
-		Data:     branches,
+		Data:     inventories,
 		Status:   http.StatusOK,
 		Messages: "Success",
 		Total:    &total,
@@ -56,6 +62,11 @@ func (h *InventoryHandler) GetInventoryByID(c echo.Context) error {
 }
 
 func (h *InventoryHandler) CreateInventory(c echo.Context) error {
+	userClaims, err := middleware.ExtractUser(c)
+	if err != nil {
+		return exception.HandleError(c, err)
+	}
+
 	dto := new(InventoryCreateDto)
 
 	if err := c.Bind(dto); err != nil {
@@ -66,7 +77,7 @@ func (h *InventoryHandler) CreateInventory(c echo.Context) error {
 		return exception.HandleError(c, err)
 	}
 
-	if err := h.service.Create(*dto); err != nil {
+	if err := h.service.Create(*dto, userClaims); err != nil {
 		return exception.HandleError(c, err)
 	}
 
