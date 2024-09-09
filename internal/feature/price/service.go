@@ -7,7 +7,7 @@ import (
 )
 
 type PriceServiceImpl interface {
-	GetAll(page, limit int) ([]schema.Price, int64, error)
+	GetAll(inventoryID string, page, limit int) ([]schema.Price, int64, error)
 	FindByID(inventory_id string) (*schema.Price, error)
 	Create(dto PriceCreateDto) error
 	Update(price_id string, dto PriceUpdateDto) error
@@ -34,8 +34,8 @@ func (s *priceService) FindByID(price_id string) (*schema.Price, error) {
 }
 
 // GetAll implements PriceServiceImpl.
-func (s *priceService) GetAll(page int, limit int) ([]schema.Price, int64, error) {
-	prices, total, err := s.priceRepo.GetAll(page, limit)
+func (s *priceService) GetAll(inventoryID string, page int, limit int) ([]schema.Price, int64, error) {
+	prices, total, err := s.priceRepo.GetAll(inventoryID, page, limit)
 	if err != nil {
 		return nil, 0, err
 	}

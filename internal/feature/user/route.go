@@ -9,8 +9,10 @@ import (
 func InitUserRoutes(e *echo.Echo, service UserServiceImpl) {
 	h := NewUserHandler(service)
 	r := e.Group("/users")
-	r.Use(middleware.JWTAccessMiddleware)
-	r.GET("", h.GetUsers)
-	r.GET("/:username", h.GetUserByUsername)
 	r.POST("", h.CreateUser)
+
+	protected := e.Group("/restricted")
+	protected.Use(middleware.JWTAccessMiddleware)
+	protected.GET("", h.GetUsers)
+	protected.GET("/:username", h.GetUserByUsername)
 }

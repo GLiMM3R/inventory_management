@@ -18,6 +18,8 @@ func NewPriceHandler(service PriceServiceImpl) *PriceHandler {
 }
 
 func (h *PriceHandler) GetPrices(c echo.Context) error {
+	inventoryID := c.QueryParam("inventory_id")
+
 	page, err := strconv.Atoi(c.QueryParam("page"))
 	if err != nil || page <= 0 {
 		page = 1
@@ -28,7 +30,7 @@ func (h *PriceHandler) GetPrices(c echo.Context) error {
 		limit = 10
 	}
 
-	branches, total, err := h.service.GetAll(page, limit)
+	branches, total, err := h.service.GetAll(inventoryID, page, limit)
 	if err != nil {
 		return exception.HandleError(c, err)
 	}

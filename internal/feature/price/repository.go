@@ -9,7 +9,7 @@ import (
 )
 
 type PriceRepositoryImpl interface {
-	GetAll(page, limit int) ([]schema.Price, int64, error)
+	GetAll(inventoryID string, page, limit int) ([]schema.Price, int64, error)
 	FindByID(price_id string) (*schema.Price, error)
 	Create(price *schema.Price) error
 	Update(price *schema.Price) error
@@ -26,9 +26,6 @@ func NewPriceRepository(db *gorm.DB) PriceRepositoryImpl {
 // Create implements PriceRepositoryImpl.
 func (r *priceRepository) Create(price *schema.Price) error {
 	if err := r.db.Create(&price).Error; err != nil {
-		if errors.Is(gorm.ErrDuplicatedKey, err) {
-			return exception.ErrDuplicateEntry
-		}
 		return exception.ErrInternal
 	}
 	return nil
@@ -48,14 +45,14 @@ func (r *priceRepository) FindByID(price_id string) (*schema.Price, error) {
 }
 
 // GetAll implements PriceRepositoryImpl.
-func (r *priceRepository) GetAll(page int, limit int) ([]schema.Price, int64, error) {
+func (r *priceRepository) GetAll(inventoryID string, page int, limit int) ([]schema.Price, int64, error) {
 	var data []schema.Price
 	var total int64
 	offset := (page - 1) * limit
 
 	query := r.db.Model(&schema.Price{})
 
-	if err := query.Count(&total).Limit(limit).Offset(offset).Find(&data).Error; err != nil {
+	if err := query.Where("fk_inventory_id = ?", inventoryID).Count(&total).Limit(limit).Offset(offset).Find(&data).Error; err != nil {
 		return nil, 0, err
 	}
 

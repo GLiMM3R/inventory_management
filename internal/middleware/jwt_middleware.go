@@ -1,7 +1,6 @@
 package middleware
 
 import (
-	"fmt"
 	"inverntory_management/internal/exception"
 	"inverntory_management/internal/service"
 	"inverntory_management/internal/types"
@@ -27,7 +26,6 @@ func JWTAccessMiddleware(next echo.HandlerFunc) echo.HandlerFunc {
 		if err != nil {
 			return exception.HandleError(c, err)
 		}
-		fmt.Println("claims=>", claims)
 		c.Set("user", claims)
 
 		return next(c)
