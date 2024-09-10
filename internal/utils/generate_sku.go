@@ -19,8 +19,8 @@ func GenerateSKU(name string, length int, prefix string) string {
 	// Take the first 4 characters of each word
 	var skuParts []string
 	for _, word := range words {
-		if len(word) > 3 {
-			skuParts = append(skuParts, word[:3])
+		if len(word) > 4 {
+			skuParts = append(skuParts, word[:4])
 		} else {
 			skuParts = append(skuParts, word)
 		}
