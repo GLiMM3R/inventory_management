@@ -46,16 +46,24 @@ func (s *saleService) GetAll(page int, limit int) ([]schema.Sale, int64, error) 
 
 // Create implements PriceServiceImpl.
 func (s *saleService) Create(dto SaleCreateDto) error {
-	newPrice := &schema.Sale{
-		SaleID:      uuid.NewString(),
-		InventoryID: dto.InventoryID,
-		Quantity:    dto.Quantity,
-		SaleDate:    time.Now().Unix(),
+	saleID := uuid.NewString()
+
+	for _, item := range dto.Items {
+		newSale := &schema.Sale{
+			SaleID:      saleID,
+			InventoryID: item.InventoryID,
+			Quantity:    item.Quantity,
+			SaleDate:    time.Now().Unix(),
+		}
+
+		if err := s.saleRepo.Create(newSale); err != nil {
+			return err
+		}
 	}
 
-	if err := s.saleRepo.Create(newPrice); err != nil {
-		return err
-	}
+	// if err := s.saleRepo.Create(sales); err != nil {
+	// 	return err
+	// }
 
 	return nil
 }

@@ -74,3 +74,10 @@ func (h *AuthHandler) GetRefreshToken(c echo.Context) error {
 		Messages: "Successfully",
 	})
 }
+func (h *AuthHandler) CheckAuth(c echo.Context) error {
+	return c.JSON(http.StatusOK, types.Response{
+		Data:     true,
+		Status:   http.StatusOK,
+		Messages: "Successfully",
+	})
+}

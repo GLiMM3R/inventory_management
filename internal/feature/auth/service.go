@@ -120,7 +120,17 @@ func (s *authService) Logout(token string) error {
 	ctx, cancel := context.WithCancel(context.Background())
 	defer cancel()
 
-	if err := s.redisClient.Del(ctx, "refresh:"+token).Err(); err != nil {
+	tokenString := strings.TrimPrefix(token, "Bearer ")
+	if tokenString == token {
+		return exception.ErrInvalidToken
+	}
+
+	// exists, err := s.redisClient.Exists(ctx, "refresh:"+tokenString).Result()
+	// if err != nil || exists == 0 {
+	// 	return exception.ErrTokenExpired
+	// }
+
+	if err := s.redisClient.Del(ctx, "refresh:"+tokenString).Err(); err != nil {
 		return exception.ErrInternal
 	}
 

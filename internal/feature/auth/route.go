@@ -11,8 +11,8 @@ func InitAuthRoutes(e *echo.Echo, service AuthServiceImpl) {
 	r := e.Group("/auth")
 	r.POST("/login", h.Login)
 
-	protected := r.Group("")
-	protected.Use(middleware.JWTRefreshMiddleware)
-	protected.POST("/logout", h.Logout)
-	protected.GET("/refresh-token", h.GetRefreshToken)
+	// protected := r.Group("")
+	r.Use(middleware.JWTRefreshMiddleware)
+	r.POST("/logout", h.Logout)
+	r.GET("/refresh-token", h.GetRefreshToken)
 }

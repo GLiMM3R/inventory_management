@@ -1,0 +1,7 @@
+fxeahub.localhost {
+	reverse_proxy /api/* http://localhost:3001
+}
+
+fxeahub-api.localhost {
+	reverse_proxy :3001
+}

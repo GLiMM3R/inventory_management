@@ -22,7 +22,29 @@ services:
     volumes:
       - redis_data:/data
 
+  caddy:
+    image: caddy:alpine # Use the latest version of Caddy
+    container_name: caddy
+    restart: unless-stopped
+    ports:
+      - "80:80"
+      - "443:443"
+    volumes:
+      - ./Caddyfile:/etc/caddy/Caddyfile # Mount your Caddyfile
+      - caddy_data:/data
+      - caddy_config:/config
+    networks:
+      - webnet
+
 volumes:
   redis_data:
   postgres_data:
+  caddy_data:
+    driver: "local"
+  caddy_config:
+    driver: "local"
+
+networks:
+  webnet:
+    driver: bridge
 #Command docker-compose --env-file .env -f deploy/docker-compose.yaml up -d
