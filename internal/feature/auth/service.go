@@ -8,6 +8,7 @@ import (
 	"inverntory_management/internal/feature/user"
 	"inverntory_management/internal/service"
 	"inverntory_management/internal/types"
+	"math/rand"
 	"strings"
 	"time"
 
@@ -19,6 +20,8 @@ type AuthServiceImpl interface {
 	Login(request *AuthRequest) (*AuthResponse, error)
 	Logout(token string) error
 	GetRefreshToken(token string, userClaims *types.UserClaims) (*RefreshResponse, error)
+	SendOTP(username string) error
+	VerifyOTP(userID, otp string) error
 }
 
 type authService struct {
@@ -88,6 +91,10 @@ func (s *authService) Login(request *AuthRequest) (*AuthResponse, error) {
 		return nil, exception.ErrInvalidCredentials
 	}
 
+	if err := s.VerifyOTP(user.UserID, request.OTP); err != nil {
+		return nil, err
+	}
+
 	accessToken, err := service.GenerateAccessToken(types.TokenPayload{UserID: user.UserID, Username: user.Username})
 	if err != nil {
 		return nil, exception.ErrInternal
@@ -131,6 +138,56 @@ func (s *authService) Logout(token string) error {
 	// }
 
 	if err := s.redisClient.Del(ctx, "refresh:"+tokenString).Err(); err != nil {
+		return exception.ErrInternal
+	}
+
+	return nil
+}
+
+// SendOTP implements AuthServiceImpl.
+func (s *authService) SendOTP(username string) error {
+	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
+	defer cancel()
+
+	user, err := s.userRepo.FindByUsername(username)
+	if err != nil {
+		return err
+	}
+
+	otp := fmt.Sprintf("%06d", rand.Intn(1000000))
+
+	if err := s.redisClient.Set(ctx, "otp:"+user.UserID, otp, 5*time.Minute).Err(); err != nil {
+		return exception.ErrInternal
+	}
+
+	body, err := service.GenerateEmailBody(user.Username, otp)
+	if err != nil {
+		return err
+	}
+
+	Subject := "Your Login Verification Code"
+
+	sender := service.NewSender(config.AppConfig.EMAIL, config.AppConfig.EMAIL_PWD)
+
+	Receiver := []string{user.Email}
+
+	bodyMessage := sender.WriteHTMLEmail(Receiver, Subject, body)
+
+	sender.SendMail(Receiver, Subject, bodyMessage)
+
+	return nil
+}
+
+// VerifyOTP implements AuthServiceImpl.
+func (s *authService) VerifyOTP(userID, otp string) error {
+	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
+	defer cancel()
+
+	if storedOTP, err := s.redisClient.Get(ctx, "otp:"+userID).Result(); err != nil || storedOTP != otp {
+		return exception.ErrInvalidOTP
+	}
+
+	if err := s.redisClient.Del(ctx, "otp:"+userID).Err(); err != nil {
 		return exception.ErrInternal
 	}
 

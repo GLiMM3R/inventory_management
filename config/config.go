@@ -11,6 +11,8 @@ import (
 type Config struct {
 	APP_NAME           string `mapstructure:"APP_NAME"`
 	PORT               int    `mapstructure:"PORT"`
+	EMAIL              string `mapstructure:"EMAIL"`
+	EMAIL_PWD          string `mapstructure:"EMAIL_PWD"`
 	DATABASE_DRIVER    string `mapstructure:"DATABASE_DRIVER"`
 	DATABASE_URL       string `mapstructure:"DATABASE_URL"`
 	ACCESS_SECRET      string `mapstructure:"ACCESS_SECRET"`

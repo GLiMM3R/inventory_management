@@ -1,6 +1,7 @@
 package auth
 
 import (
+	"fmt"
 	"inverntory_management/internal/exception"
 	"inverntory_management/internal/middleware"
 	"inverntory_management/internal/types"
@@ -20,6 +21,11 @@ func NewAuthHandler(service AuthServiceImpl) AuthHandler {
 func (h *AuthHandler) Login(c echo.Context) error {
 	request := new(AuthRequest)
 	if err := c.Bind(request); err != nil {
+		return exception.HandleError(c, exception.ErrInvalidData)
+	}
+
+	if err := c.Validate(request); err != nil {
+		fmt.Println(err)
 		return exception.HandleError(c, exception.ErrInvalidData)
 	}
 
@@ -74,6 +80,24 @@ func (h *AuthHandler) GetRefreshToken(c echo.Context) error {
 		Messages: "Successfully",
 	})
 }
+
+func (h *AuthHandler) SendOTP(c echo.Context) error {
+	request := new(OTPRequest)
+	if err := c.Bind(request); err != nil {
+		return exception.HandleError(c, exception.ErrInvalidData)
+	}
+
+	if err := h.service.SendOTP(request.Username); err != nil {
+		return exception.HandleError(c, err)
+	}
+
+	return c.JSON(http.StatusOK, types.Response{
+		Data:     true,
+		Status:   http.StatusOK,
+		Messages: "Successfully",
+	})
+}
+
 func (h *AuthHandler) CheckAuth(c echo.Context) error {
 	return c.JSON(http.StatusOK, types.Response{
 		Data:     true,

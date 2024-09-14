@@ -13,6 +13,7 @@ type SaleRepositoryImpl interface {
 	FindByID(sale_id string) (*schema.Sale, error)
 	Create(sale *schema.Sale) error
 	Update(sale *schema.Sale) error
+	Count() (int64, error)
 }
 
 type saleRepository struct {
@@ -51,7 +52,7 @@ func (r *saleRepository) Create(sale *schema.Sale) error {
 		}
 
 		if err := tx.Create(&sale).Error; err != nil {
-			if errors.Is(gorm.ErrDuplicatedKey, err) {
+			if errors.Is(err, gorm.ErrDuplicatedKey) {
 				return exception.ErrDuplicateEntry
 			}
 			return exception.ErrInternal
@@ -91,10 +92,19 @@ func (r *saleRepository) GetAll(page int, limit int) ([]schema.Sale, int64, erro
 // Update implements PriceRepositoryImpl.
 func (r *saleRepository) Update(sale *schema.Sale) error {
 	if err := r.db.Save(&sale).Error; err != nil {
-		if errors.Is(gorm.ErrDuplicatedKey, err) {
+		if errors.Is(err, gorm.ErrDuplicatedKey) {
 			return exception.ErrDuplicateEntry
 		}
 		return exception.ErrInternal
 	}
 	return nil
+}
+
+// Count implements SaleRepositoryImpl.
+func (r *saleRepository) Count() (int64, error) {
+	var count int64
+	if err := r.db.Model(&schema.Sale{}).Count(&count).Error; err != nil {
+		return 0, exception.ErrInternal
+	}
+	return count, nil
 }

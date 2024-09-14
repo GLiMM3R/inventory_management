@@ -1,7 +1,3 @@
-fxeahub.localhost {
-	reverse_proxy /api/* http://localhost:3001
-}
-
-fxeahub-api.localhost {
+my-inventory.com {
 	reverse_proxy :3001
 }
