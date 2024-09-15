@@ -9,7 +9,7 @@ import (
 )
 
 type BranchRepositoryImpl interface {
-	GetAll(page, limit int) ([]schema.Branch, int64, error)
+	GetAll(page, limit int, branchID string, notSelf bool) ([]schema.Branch, int64, error)
 	FindByID(branch_id string) (*schema.Branch, error)
 	Create(branch *schema.Branch) error
 	Update(branch *schema.Branch) error
@@ -35,12 +35,16 @@ func (r *branchRepository) Create(branch *schema.Branch) error {
 }
 
 // GetAll implements BranchRepository.
-func (r *branchRepository) GetAll(page int, limit int) ([]schema.Branch, int64, error) {
+func (r *branchRepository) GetAll(page int, limit int, branchID string, notSelf bool) ([]schema.Branch, int64, error) {
 	var data []schema.Branch
 	var total int64
 	offset := (page - 1) * limit
 
 	query := r.db.Model(&schema.Branch{})
+
+	if notSelf {
+		query = query.Where("branch_id <> ?", branchID)
+	}
 
 	if err := query.Count(&total).Limit(limit).Offset(offset).Find(&data).Error; err != nil {
 		return nil, 0, err

@@ -3,7 +3,7 @@ package schema
 type Sale struct {
 	ID          uint      `json:"-" gorm:"primaryKey;autoIncrement:true;column:id"`
 	SaleID      string    `json:"sale_id" gorm:"primaryKey;unique;column:sale_id"`
-	InventoryID string    `json:"inventory_id" gorm:"column:fk_inventory_id;uniqueIndex:idx_inventory_id"`
+	InventoryID string    `json:"inventory_id" gorm:"column:fk_inventory_id"`
 	Inventory   Inventory `json:"-" gorm:"foreignKey:fk_inventory_id;references:inventory_id"`
 	OrderNumber string    `json:"order_number" gorm:"column:order_number"`
 	Quantity    int       `json:"quantity" gorm:"column:quantity"`

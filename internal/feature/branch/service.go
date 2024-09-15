@@ -2,12 +2,14 @@ package branch
 
 import (
 	"inverntory_management/internal/database/schema"
+	"inverntory_management/internal/feature/user"
+	"inverntory_management/internal/types"
 
 	"github.com/google/uuid"
 )
 
 type BranchServiceImpl interface {
-	GetAll(page, limit int) ([]schema.Branch, int64, error)
+	GetAll(page, limit int, userCalims types.UserClaims, notSelf bool) ([]schema.Branch, int64, error)
 	FindByID(branch_id string) (*schema.Branch, error)
 	Create(dto BranchCreateDto) error
 	Update(branch_id string, dto BranchUpdateDto) error
@@ -15,20 +17,26 @@ type BranchServiceImpl interface {
 
 type branchService struct {
 	branchRepo BranchRepositoryImpl
+	userRepo   user.UserRepositoryImpl
 }
 
-func NewBranchService(branchRepo BranchRepositoryImpl) BranchServiceImpl {
-	return &branchService{branchRepo: branchRepo}
+func NewBranchService(branchRepo BranchRepositoryImpl, userRepo user.UserRepositoryImpl) BranchServiceImpl {
+	return &branchService{branchRepo: branchRepo, userRepo: userRepo}
 }
 
 // GetAll implements BranchServiceImpl.
-func (s *branchService) GetAll(page int, limit int) ([]schema.Branch, int64, error) {
-	users, total, err := s.branchRepo.GetAll(page, limit)
+func (s *branchService) GetAll(page int, limit int, userClaims types.UserClaims, notSelf bool) ([]schema.Branch, int64, error) {
+	user, err := s.userRepo.FindByID(userClaims.Subject)
 	if err != nil {
 		return nil, 0, err
 	}
 
-	return users, total, nil
+	branches, total, err := s.branchRepo.GetAll(page, limit, user.BranchID, notSelf)
+	if err != nil {
+		return nil, 0, err
+	}
+
+	return branches, total, nil
 }
 
 // Create implements BranchServiceImpl.

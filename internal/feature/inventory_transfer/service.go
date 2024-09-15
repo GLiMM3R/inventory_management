@@ -2,6 +2,8 @@ package inventory_transfer
 
 import (
 	"inverntory_management/internal/database/schema"
+	"inverntory_management/internal/feature/user"
+	"inverntory_management/internal/types"
 	"time"
 
 	"github.com/google/uuid"
@@ -10,15 +12,16 @@ import (
 type InventoryTransferServiceImpl interface {
 	GetAll(page, limit int) ([]schema.InventoryTransfer, int64, error)
 	FindByID(transfer_id string) (*schema.InventoryTransfer, error)
-	Create(dto InventoryTransferCreateDto) error
+	Create(dto InventoryTransferCreateDto, userClaims types.UserClaims) error
 }
 
 type inventoryTransferService struct {
 	inventoryRepo InventoryTransferRepositoryImpl
+	userRepo      user.UserRepositoryImpl
 }
 
-func NewInventoryService(inventoryRepo InventoryTransferRepositoryImpl) InventoryTransferServiceImpl {
-	return &inventoryTransferService{inventoryRepo: inventoryRepo}
+func NewInventoryService(inventoryRepo InventoryTransferRepositoryImpl, userRepo user.UserRepositoryImpl) InventoryTransferServiceImpl {
+	return &inventoryTransferService{inventoryRepo: inventoryRepo, userRepo: userRepo}
 }
 
 // FindByID implements InventoryServiceImpl.
@@ -42,11 +45,16 @@ func (s *inventoryTransferService) GetAll(page int, limit int) ([]schema.Invento
 }
 
 // Create implements InventoryServiceImpl.
-func (s *inventoryTransferService) Create(dto InventoryTransferCreateDto) error {
+func (s *inventoryTransferService) Create(dto InventoryTransferCreateDto, userClaims types.UserClaims) error {
+	user, err := s.userRepo.FindByID(userClaims.Subject)
+	if err != nil {
+		return err
+	}
+
 	newTransfer := &schema.InventoryTransfer{
 		TransferID:   uuid.NewString(),
 		InventoryID:  dto.InventoryID,
-		FromBranchID: dto.FromBranchID,
+		FromBranchID: user.BranchID,
 		ToBranchID:   dto.ToBranchID,
 		Quantity:     dto.Quantity,
 		TransferDate: time.Now().Unix(),

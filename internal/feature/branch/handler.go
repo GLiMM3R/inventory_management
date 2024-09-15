@@ -2,6 +2,7 @@ package branch
 
 import (
 	"inverntory_management/internal/exception"
+	"inverntory_management/internal/middleware"
 	"inverntory_management/internal/types"
 	"net/http"
 	"strconv"
@@ -18,6 +19,13 @@ func NewUserHandler(service BranchServiceImpl) *BranchHandler {
 }
 
 func (h *BranchHandler) GetBranches(c echo.Context) error {
+	userClaims, err := middleware.ExtractUser(c)
+	if err != nil {
+		return exception.HandleError(c, err)
+	}
+
+	notSelf := c.QueryParam("not_self") == "true"
+
 	page, err := strconv.Atoi(c.QueryParam("page"))
 	if err != nil || page <= 0 {
 		page = 1
@@ -28,7 +36,7 @@ func (h *BranchHandler) GetBranches(c echo.Context) error {
 		limit = 10
 	}
 
-	branches, total, err := h.service.GetAll(page, limit)
+	branches, total, err := h.service.GetAll(page, limit, *userClaims, notSelf)
 	if err != nil {
 		return exception.HandleError(c, err)
 	}

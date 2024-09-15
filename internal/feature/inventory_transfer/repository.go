@@ -53,7 +53,7 @@ func (r *inventoryTransferRepository) Create(transfer *schema.InventoryTransfer)
 			existingInventory.Quantity = existingInventory.Quantity + transfer.Quantity
 			if err := tx.Model(&schema.Inventory{}).Where("inventory_id = ?", inventory.InventoryID).
 				Update("quantity", existingInventory.Quantity).Error; err != nil {
-				if errors.Is(gorm.ErrDuplicatedKey, err) {
+				if errors.Is(err, gorm.ErrDuplicatedKey) {
 					return exception.ErrDuplicateEntry
 				}
 				return exception.ErrInternal
@@ -70,7 +70,7 @@ func (r *inventoryTransferRepository) Create(transfer *schema.InventoryTransfer)
 			}
 
 			if err := tx.Create(&newInventory).Error; err != nil {
-				if errors.Is(gorm.ErrDuplicatedKey, err) {
+				if errors.Is(err, gorm.ErrDuplicatedKey) {
 					return exception.ErrDuplicateEntry
 				}
 				return exception.ErrInternal
@@ -85,7 +85,7 @@ func (r *inventoryTransferRepository) Create(transfer *schema.InventoryTransfer)
 		}
 
 		if err := tx.Create(&transfer).Error; err != nil {
-			if errors.Is(gorm.ErrDuplicatedKey, err) {
+			if errors.Is(err, gorm.ErrDuplicatedKey) {
 				return exception.ErrDuplicateEntry
 			}
 			return exception.ErrInternal
@@ -125,7 +125,7 @@ func (r *inventoryTransferRepository) GetAll(page int, limit int) ([]schema.Inve
 // Update implements PriceRepositoryImpl.
 func (r *inventoryTransferRepository) Update(transfer *schema.InventoryTransfer) error {
 	if err := r.db.Save(&transfer).Error; err != nil {
-		if errors.Is(gorm.ErrDuplicatedKey, err) {
+		if errors.Is(err, gorm.ErrDuplicatedKey) {
 			return exception.ErrDuplicateEntry
 		}
 		return exception.ErrInternal

@@ -46,26 +46,6 @@ func (s *saleService) GetAll(page int, limit int) ([]schema.Sale, int64, error) 
 	return sales, total, nil
 }
 
-// Create implements PriceServiceImpl.
-// func (s *saleService) Create(dto SaleCreateDto) error {
-// 	saleID := uuid.NewString()
-
-// 	for _, item := range dto.Items {
-// 		newSale := &schema.Sale{
-// 			SaleID:      saleID,
-// 			InventoryID: item.InventoryID,
-// 			Quantity:    item.Quantity,
-// 			SaleDate:    time.Now().Unix(),
-// 		}
-
-// 		if err := s.saleRepo.Create(newSale); err != nil {
-// 			return err
-// 		}
-// 	}
-
-// 	return nil
-// }
-
 func (s *saleService) Create(dto SaleCreateDto) error {
 	errChan := make(chan error, len(dto.Items))
 	var wg sync.WaitGroup
@@ -76,6 +56,7 @@ func (s *saleService) Create(dto SaleCreateDto) error {
 	}
 
 	orderNumber := fmt.Sprintf("ORD-%09d", count+1)
+	saleDate := time.Now().Unix()
 
 	for _, item := range dto.Items {
 		wg.Add(1)
@@ -86,7 +67,7 @@ func (s *saleService) Create(dto SaleCreateDto) error {
 				InventoryID: item.InventoryID,
 				OrderNumber: orderNumber,
 				Quantity:    item.Quantity,
-				SaleDate:    time.Now().Unix(),
+				SaleDate:    saleDate,
 			}
 
 			if err := s.saleRepo.Create(newSale); err != nil {

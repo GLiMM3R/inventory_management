@@ -2,6 +2,7 @@ package inventory_transfer
 
 import (
 	"inverntory_management/internal/exception"
+	"inverntory_management/internal/middleware"
 	"inverntory_management/internal/types"
 	"net/http"
 	"strconv"
@@ -56,6 +57,11 @@ func (h *InventoryTransactionHandler) GetInventoryTransferByID(c echo.Context) e
 }
 
 func (h *InventoryTransactionHandler) CreateInventoryTransfer(c echo.Context) error {
+	userClaims, err := middleware.ExtractUser(c)
+	if err != nil {
+		return exception.HandleError(c, err)
+	}
+
 	dto := new(InventoryTransferCreateDto)
 
 	if err := c.Bind(dto); err != nil {
@@ -66,7 +72,7 @@ func (h *InventoryTransactionHandler) CreateInventoryTransfer(c echo.Context) er
 		return exception.HandleError(c, err)
 	}
 
-	if err := h.service.Create(*dto); err != nil {
+	if err := h.service.Create(*dto, *userClaims); err != nil {
 		// return exception.HandleError(c, err)
 		return c.JSON(http.StatusInternalServerError, types.Response{
 			Data:     true,
