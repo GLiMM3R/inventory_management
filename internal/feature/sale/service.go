@@ -21,9 +21,7 @@ type saleService struct {
 }
 
 func NewSaleService(saleRepo SaleRepositoryImpl) SaleServiceImpl {
-	return &saleService{
-		saleRepo: saleRepo,
-	}
+	return &saleService{saleRepo: saleRepo}
 }
 
 // FindByID implements PriceServiceImpl.

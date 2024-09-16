@@ -2,6 +2,7 @@ package sale
 
 import (
 	"errors"
+	"fmt"
 	"inverntory_management/internal/database/schema"
 	"inverntory_management/internal/exception"
 
@@ -36,18 +37,18 @@ func (r *saleRepository) Create(sale *schema.Sale) error {
 			return exception.ErrInternal
 		}
 
-		if sale.Quantity > existingInventory.Quantity {
+		if sale.Quantity >= existingInventory.Quantity {
 			if err := tx.Model(&schema.Inventory{}).Where("inventory_id = ?", sale.InventoryID).
 				Update("status", "sold").Error; err != nil {
 				return exception.ErrInternal
 			}
-			return exception.ErrInsufficientQuantity
 		}
 
 		quantityFloat := float64(sale.Quantity)
 		sale.TotalPrice = quantityFloat * existingInventory.Price
 
 		if err := tx.Model(&schema.Inventory{}).Where("inventory_id = ?", sale.InventoryID).UpdateColumn("quantity", gorm.Expr("quantity - ?", sale.Quantity)).Error; err != nil {
+			fmt.Println("here=>", err)
 			return exception.ErrInternal
 		}
 

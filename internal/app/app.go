@@ -46,7 +46,7 @@ func Initialize() (*echo.Echo, error) {
 	authService := auth.NewAuthService(userRepo, redisClient)
 	userService := user.NewUserService(userRepo)
 	branchService := branch.NewBranchService(branchRepo, userRepo)
-	inventoryService := inventory.NewInventoryService(inventoryRepo, userRepo)
+	inventoryService := inventory.NewInventoryService(inventoryRepo, userRepo, priceRepo)
 	priceService := price.NewPriceService(priceRepo)
 	saleService := sale.NewSaleService(saleRepo)
 	transferService := inventory_transfer.NewInventoryService(transferRepo, userRepo)

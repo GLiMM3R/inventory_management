@@ -1,6 +1,17 @@
 version: "3.8"
 
 services:
+  # api:
+  #   build: ../
+  #   container_name: api
+  #   ports:
+  #     - "8080:8080"
+  #   depends_on:
+  #     - postgres
+  #     - redis
+  #   networks:
+  #     - webnet
+
   postgres:
     container_name: inventory
     image: postgres:latest
@@ -14,6 +25,8 @@ services:
       POSTGRES_PORT: ${POSTGRES_PORT}
     volumes:
       - postgres_data:/var/lib/postgresql/data
+    networks:
+      - webnet
 
   redis:
     image: redis:latest
@@ -21,6 +34,8 @@ services:
       - "6379:6379"
     volumes:
       - redis_data:/data
+    networks:
+      - webnet
 
   caddy:
     image: caddy:alpine # Use the latest version of Caddy

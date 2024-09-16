@@ -10,7 +10,7 @@ import (
 )
 
 type InventoryTransferServiceImpl interface {
-	GetAll(page, limit int) ([]schema.InventoryTransfer, int64, error)
+	GetAll(page, limit int, startDateUnix, endDateUnix int64, userClaims types.UserClaims) ([]InventoryTransferResponse, int64, error)
 	FindByID(transfer_id string) (*schema.InventoryTransfer, error)
 	Create(dto InventoryTransferCreateDto, userClaims types.UserClaims) error
 }
@@ -35,8 +35,13 @@ func (s *inventoryTransferService) FindByID(inventory_id string) (*schema.Invent
 }
 
 // GetAll implements InventoryServiceImpl.
-func (s *inventoryTransferService) GetAll(page int, limit int) ([]schema.InventoryTransfer, int64, error) {
-	inventories, total, err := s.inventoryRepo.GetAll(page, limit)
+func (s *inventoryTransferService) GetAll(page, limit int, startDateUnix, endDateUnix int64, userClaims types.UserClaims) ([]InventoryTransferResponse, int64, error) {
+	user, err := s.userRepo.FindByID(userClaims.Subject)
+	if err != nil {
+		return nil, 0, err
+	}
+
+	inventories, total, err := s.inventoryRepo.GetAll(page, limit, user.BranchID, startDateUnix, endDateUnix)
 	if err != nil {
 		return nil, 0, err
 	}

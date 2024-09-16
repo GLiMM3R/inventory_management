@@ -14,4 +14,5 @@ func InitInventoryRoutes(e *echo.Echo, service InventoryServiceImpl) {
 	r.GET("/:id", h.GetInventoryByID)
 	r.POST("", h.CreateInventory)
 	r.PATCH("/:id", h.UpdateInventory)
+	r.DELETE("/:id", h.DeleteInventory)
 }

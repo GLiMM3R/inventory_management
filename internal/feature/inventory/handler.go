@@ -24,6 +24,8 @@ func (h *InventoryHandler) GetInventories(c echo.Context) error {
 		return exception.HandleError(c, err)
 	}
 
+	status := c.QueryParam("status")
+
 	page, err := strconv.Atoi(c.QueryParam("page"))
 	if err != nil || page <= 0 {
 		page = 1
@@ -34,7 +36,7 @@ func (h *InventoryHandler) GetInventories(c echo.Context) error {
 		limit = 10
 	}
 
-	inventories, total, err := h.service.GetAll(page, limit, userClaims)
+	inventories, total, err := h.service.GetAll(page, limit, userClaims, status)
 	if err != nil {
 		return exception.HandleError(c, err)
 	}
@@ -102,6 +104,20 @@ func (h *InventoryHandler) UpdateInventory(c echo.Context) error {
 	}
 
 	if err := h.service.Update(inventory_id, *dto); err != nil {
+		return exception.HandleError(c, err)
+	}
+
+	return c.JSON(http.StatusOK, types.Response{
+		Data:     true,
+		Status:   http.StatusOK,
+		Messages: "Success",
+	})
+}
+
+func (h *InventoryHandler) DeleteInventory(c echo.Context) error {
+	inventory_id := c.Param("id")
+
+	if err := h.service.Delete(inventory_id); err != nil {
 		return exception.HandleError(c, err)
 	}
 
