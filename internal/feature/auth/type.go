@@ -3,6 +3,11 @@ package auth
 type AuthRequest struct {
 	Username string `json:"username" validate:"required"`
 	Password string `json:"password" validate:"required"`
+	OTP      string `json:"otp" validate:"required"`
+}
+
+type OTPRequest struct {
+	Username string `json:"username" validate:"required"`
 }
 
 type AuthResponse struct {

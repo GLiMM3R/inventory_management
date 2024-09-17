@@ -1,7 +1,9 @@
 package sale
 
 import (
+	"fmt"
 	"inverntory_management/internal/database/schema"
+	"sync"
 	"time"
 
 	"github.com/google/uuid"
@@ -19,9 +21,7 @@ type saleService struct {
 }
 
 func NewSaleService(saleRepo SaleRepositoryImpl) SaleServiceImpl {
-	return &saleService{
-		saleRepo: saleRepo,
-	}
+	return &saleService{saleRepo: saleRepo}
 }
 
 // FindByID implements PriceServiceImpl.
@@ -44,17 +44,43 @@ func (s *saleService) GetAll(page int, limit int) ([]schema.Sale, int64, error) 
 	return sales, total, nil
 }
 
-// Create implements PriceServiceImpl.
 func (s *saleService) Create(dto SaleCreateDto) error {
-	newPrice := &schema.Sale{
-		SaleID:      uuid.NewString(),
-		InventoryID: dto.InventoryID,
-		Quantity:    dto.Quantity,
-		SaleDate:    time.Now().Unix(),
+	errChan := make(chan error, len(dto.Items))
+	var wg sync.WaitGroup
+
+	count, err := s.saleRepo.Count()
+	if err != nil {
+		return err
 	}
 
-	if err := s.saleRepo.Create(newPrice); err != nil {
-		return err
+	orderNumber := fmt.Sprintf("ORD-%09d", count+1)
+	saleDate := time.Now().Unix()
+
+	for _, item := range dto.Items {
+		wg.Add(1)
+		go func(item Item) {
+			defer wg.Done()
+			newSale := &schema.Sale{
+				SaleID:      uuid.NewString(),
+				InventoryID: item.InventoryID,
+				OrderNumber: orderNumber,
+				Quantity:    item.Quantity,
+				SaleDate:    saleDate,
+			}
+
+			if err := s.saleRepo.Create(newSale); err != nil {
+				errChan <- err
+			}
+		}(item)
+	}
+
+	wg.Wait()
+	close(errChan)
+
+	for err := range errChan {
+		if err != nil {
+			return err
+		}
 	}
 
 	return nil

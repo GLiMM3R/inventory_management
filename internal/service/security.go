@@ -1,6 +1,7 @@
 package service
 
 import (
+	"fmt"
 	"inverntory_management/config"
 	"inverntory_management/internal/exception"
 	"inverntory_management/internal/types"
@@ -22,7 +23,7 @@ func GenerateAccessToken(payload types.TokenPayload) (string, error) {
 	claims.Subject = payload.UserID
 	claims.Username = payload.Username
 	claims.IssuedAt = time.Now().Unix()
-	claims.ExpiresAt = time.Now().Add(time.Duration(config.AppConfig.ACCESS_EXPIRATION) * time.Second).Unix()
+	claims.ExpiresAt = time.Now().Add(time.Duration(config.AppConfig.ACCESS_EXPIRATION) * time.Minute).Unix()
 
 	token := jwt.NewWithClaims(jwt.SigningMethodRS256, claims)
 	tokenString, err := token.SignedString(secret)
@@ -40,7 +41,9 @@ func GenerateRefreshToken(userID string) (string, error) {
 	claims := &types.UserClaims{}
 	claims.Subject = userID
 	claims.IssuedAt = time.Now().Unix()
-	claims.ExpiresAt = time.Now().Add(time.Duration(config.AppConfig.REFRESH_EXPIRATION) * time.Second).Unix()
+	claims.ExpiresAt = time.Now().Add(time.Duration(config.AppConfig.REFRESH_EXPIRATION) * time.Minute).Unix()
+
+	fmt.Println(claims)
 
 	token := jwt.NewWithClaims(jwt.SigningMethodHS256, claims)
 	tokenString, err := token.SignedString([]byte(secret))
@@ -57,7 +60,7 @@ func GenerateResetPasswordToken(userID string) (string, error) {
 	claims := &types.UserClaims{}
 	claims.Subject = userID
 	claims.IssuedAt = time.Now().Unix()
-	claims.ExpiresAt = time.Now().Add(time.Duration(config.AppConfig.RESET_EXPIRATION) * time.Second).Unix()
+	claims.ExpiresAt = time.Now().Add(time.Duration(config.AppConfig.RESET_EXPIRATION) * time.Minute).Unix()
 	claims.Type = "reset_password"
 
 	token := jwt.NewWithClaims(jwt.SigningMethodHS256, claims)

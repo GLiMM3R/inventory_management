@@ -2,6 +2,7 @@ package sale
 
 import (
 	"errors"
+	"fmt"
 	"inverntory_management/internal/database/schema"
 	"inverntory_management/internal/exception"
 
@@ -13,6 +14,7 @@ type SaleRepositoryImpl interface {
 	FindByID(sale_id string) (*schema.Sale, error)
 	Create(sale *schema.Sale) error
 	Update(sale *schema.Sale) error
+	Count() (int64, error)
 }
 
 type saleRepository struct {
@@ -35,23 +37,23 @@ func (r *saleRepository) Create(sale *schema.Sale) error {
 			return exception.ErrInternal
 		}
 
-		if sale.Quantity > existingInventory.Quantity {
+		if sale.Quantity >= existingInventory.Quantity {
 			if err := tx.Model(&schema.Inventory{}).Where("inventory_id = ?", sale.InventoryID).
 				Update("status", "sold").Error; err != nil {
 				return exception.ErrInternal
 			}
-			return exception.ErrInsufficientQuantity
 		}
 
 		quantityFloat := float64(sale.Quantity)
 		sale.TotalPrice = quantityFloat * existingInventory.Price
 
 		if err := tx.Model(&schema.Inventory{}).Where("inventory_id = ?", sale.InventoryID).UpdateColumn("quantity", gorm.Expr("quantity - ?", sale.Quantity)).Error; err != nil {
+			fmt.Println("here=>", err)
 			return exception.ErrInternal
 		}
 
 		if err := tx.Create(&sale).Error; err != nil {
-			if errors.Is(gorm.ErrDuplicatedKey, err) {
+			if errors.Is(err, gorm.ErrDuplicatedKey) {
 				return exception.ErrDuplicateEntry
 			}
 			return exception.ErrInternal
@@ -91,10 +93,19 @@ func (r *saleRepository) GetAll(page int, limit int) ([]schema.Sale, int64, erro
 // Update implements PriceRepositoryImpl.
 func (r *saleRepository) Update(sale *schema.Sale) error {
 	if err := r.db.Save(&sale).Error; err != nil {
-		if errors.Is(gorm.ErrDuplicatedKey, err) {
+		if errors.Is(err, gorm.ErrDuplicatedKey) {
 			return exception.ErrDuplicateEntry
 		}
 		return exception.ErrInternal
 	}
 	return nil
+}
+
+// Count implements SaleRepositoryImpl.
+func (r *saleRepository) Count() (int64, error) {
+	var count int64
+	if err := r.db.Model(&schema.Sale{}).Count(&count).Error; err != nil {
+		return 0, exception.ErrInternal
+	}
+	return count, nil
 }

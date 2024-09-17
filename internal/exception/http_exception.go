@@ -57,6 +57,18 @@ func HandleError(c echo.Context, err error) error {
 			Status:   http.StatusUnauthorized,
 			Messages: ErrAuth.Error(),
 		})
+	case ErrInvalidOTP:
+		return c.JSON(http.StatusBadRequest, types.Response{
+			Data:     nil,
+			Status:   http.StatusBadRequest,
+			Messages: ErrInvalidOTP.Error(),
+		})
+	case ErrInvalidData:
+		return c.JSON(http.StatusBadRequest, types.Response{
+			Data:     nil,
+			Status:   http.StatusBadRequest,
+			Messages: ErrInvalidData.Error(),
+		})
 	default:
 		return c.JSON(http.StatusInternalServerError, types.Response{
 			Data:     nil,

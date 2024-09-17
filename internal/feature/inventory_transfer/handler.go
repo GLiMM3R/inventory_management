@@ -2,9 +2,11 @@ package inventory_transfer
 
 import (
 	"inverntory_management/internal/exception"
+	"inverntory_management/internal/middleware"
 	"inverntory_management/internal/types"
 	"net/http"
 	"strconv"
+	"time"
 
 	"github.com/labstack/echo"
 )
@@ -18,6 +20,11 @@ func NewInventoryTransactionHandler(service InventoryTransferServiceImpl) *Inven
 }
 
 func (h *InventoryTransactionHandler) GetInventoryTransfers(c echo.Context) error {
+	userClaims, err := middleware.ExtractUser(c)
+	if err != nil {
+		return exception.HandleError(c, err)
+	}
+
 	page, err := strconv.Atoi(c.QueryParam("page"))
 	if err != nil || page <= 0 {
 		page = 1
@@ -28,7 +35,33 @@ func (h *InventoryTransactionHandler) GetInventoryTransfers(c echo.Context) erro
 		limit = 10
 	}
 
-	branches, total, err := h.service.GetAll(page, limit)
+	startDateStr := c.QueryParam("start_date")
+	var startDate time.Time
+
+	if startDateStr == "" {
+		startDate = time.Now()
+	} else {
+		startDate, err = time.Parse("2006-01-02", startDateStr)
+		if err != nil {
+			return c.JSON(http.StatusBadRequest, map[string]string{"error": "Invalid start date format"})
+		}
+	}
+	startDateUnix := startDate.Unix()
+
+	endDateStr := c.QueryParam("end_date")
+	var endDate time.Time
+
+	if endDateStr == "" {
+		endDate = time.Now()
+	} else {
+		endDate, err = time.Parse("2006-01-02", endDateStr)
+		if err != nil {
+			return c.JSON(http.StatusBadRequest, map[string]string{"error": "Invalid end date format"})
+		}
+	}
+	endDateUnix := endDate.Unix()
+
+	branches, total, err := h.service.GetAll(page, limit, startDateUnix, endDateUnix, *userClaims)
 	if err != nil {
 		return exception.HandleError(c, err)
 	}
@@ -56,6 +89,11 @@ func (h *InventoryTransactionHandler) GetInventoryTransferByID(c echo.Context) e
 }
 
 func (h *InventoryTransactionHandler) CreateInventoryTransfer(c echo.Context) error {
+	userClaims, err := middleware.ExtractUser(c)
+	if err != nil {
+		return exception.HandleError(c, err)
+	}
+
 	dto := new(InventoryTransferCreateDto)
 
 	if err := c.Bind(dto); err != nil {
@@ -66,7 +104,7 @@ func (h *InventoryTransactionHandler) CreateInventoryTransfer(c echo.Context) er
 		return exception.HandleError(c, err)
 	}
 
-	if err := h.service.Create(*dto); err != nil {
+	if err := h.service.Create(*dto, *userClaims); err != nil {
 		// return exception.HandleError(c, err)
 		return c.JSON(http.StatusInternalServerError, types.Response{
 			Data:     true,

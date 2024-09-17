@@ -18,6 +18,7 @@ var (
 	ErrAuth                 = errors.New("username or password incorrect")
 	ErrInvalidCredentials   = errors.New("invalid credentials")
 	ErrTokenExpired         = errors.New("invalid or expired refresh token")
+	ErrInvalidOTP           = errors.New("invalid OTP code")
 )
 
 type AppError struct {

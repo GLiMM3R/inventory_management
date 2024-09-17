@@ -1,6 +1,17 @@
 version: "3.8"
 
 services:
+  # api:
+  #   build: ../
+  #   container_name: api
+  #   ports:
+  #     - "8080:8080"
+  #   depends_on:
+  #     - postgres
+  #     - redis
+  #   networks:
+  #     - webnet
+
   postgres:
     container_name: inventory
     image: postgres:latest
@@ -14,6 +25,8 @@ services:
       POSTGRES_PORT: ${POSTGRES_PORT}
     volumes:
       - postgres_data:/var/lib/postgresql/data
+    networks:
+      - webnet
 
   redis:
     image: redis:latest
@@ -21,8 +34,32 @@ services:
       - "6379:6379"
     volumes:
       - redis_data:/data
+    networks:
+      - webnet
+
+  caddy:
+    image: caddy:alpine # Use the latest version of Caddy
+    container_name: caddy
+    restart: unless-stopped
+    ports:
+      - "80:80"
+      - "443:443"
+    volumes:
+      - ./Caddyfile:/etc/caddy/Caddyfile # Mount your Caddyfile
+      - caddy_data:/data
+      - caddy_config:/config
+    networks:
+      - webnet
 
 volumes:
   redis_data:
   postgres_data:
+  caddy_data:
+    driver: "local"
+  caddy_config:
+    driver: "local"
+
+networks:
+  webnet:
+    driver: bridge
 #Command docker-compose --env-file .env -f deploy/docker-compose.yaml up -d

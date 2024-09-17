@@ -10,7 +10,7 @@ import (
 )
 
 type InventoryTransferRepositoryImpl interface {
-	GetAll(page, limit int) ([]schema.InventoryTransfer, int64, error)
+	GetAll(page, limit int, branchID string, startDateUnix, endDateUnix int64) ([]InventoryTransferResponse, int64, error)
 	FindByID(transfer_id string) (*schema.InventoryTransfer, error)
 	Create(transfer *schema.InventoryTransfer) error
 	Update(transfer *schema.InventoryTransfer) error
@@ -53,7 +53,7 @@ func (r *inventoryTransferRepository) Create(transfer *schema.InventoryTransfer)
 			existingInventory.Quantity = existingInventory.Quantity + transfer.Quantity
 			if err := tx.Model(&schema.Inventory{}).Where("inventory_id = ?", inventory.InventoryID).
 				Update("quantity", existingInventory.Quantity).Error; err != nil {
-				if errors.Is(gorm.ErrDuplicatedKey, err) {
+				if errors.Is(err, gorm.ErrDuplicatedKey) {
 					return exception.ErrDuplicateEntry
 				}
 				return exception.ErrInternal
@@ -70,7 +70,7 @@ func (r *inventoryTransferRepository) Create(transfer *schema.InventoryTransfer)
 			}
 
 			if err := tx.Create(&newInventory).Error; err != nil {
-				if errors.Is(gorm.ErrDuplicatedKey, err) {
+				if errors.Is(err, gorm.ErrDuplicatedKey) {
 					return exception.ErrDuplicateEntry
 				}
 				return exception.ErrInternal
@@ -85,7 +85,7 @@ func (r *inventoryTransferRepository) Create(transfer *schema.InventoryTransfer)
 		}
 
 		if err := tx.Create(&transfer).Error; err != nil {
-			if errors.Is(gorm.ErrDuplicatedKey, err) {
+			if errors.Is(err, gorm.ErrDuplicatedKey) {
 				return exception.ErrDuplicateEntry
 			}
 			return exception.ErrInternal
@@ -108,14 +108,20 @@ func (r *inventoryTransferRepository) FindByID(price_id string) (*schema.Invento
 }
 
 // GetAll implements PriceRepositoryImpl.
-func (r *inventoryTransferRepository) GetAll(page int, limit int) ([]schema.InventoryTransfer, int64, error) {
-	var data []schema.InventoryTransfer
+func (r *inventoryTransferRepository) GetAll(page int, limit int, branchID string, startDateUnix, endDateUnix int64) ([]InventoryTransferResponse, int64, error) {
+	var data []InventoryTransferResponse
 	var total int64
 	offset := (page - 1) * limit
 
 	query := r.db.Model(&schema.InventoryTransfer{})
 
-	if err := query.Count(&total).Limit(limit).Offset(offset).Find(&data).Error; err != nil {
+	if err := query.Select("inventory_transfers.transfer_id as transfer_id", "inventory_transfers.fk_inventory_id as inventory_id",
+		"inventories.name as inventory_name", "inventory_transfers.fk_to_branch_id as to_branch_id", "branches.name as to_branch",
+		"inventory_transfers.quantity as quantity", "inventory_transfers.transfer_date as transfer_date").
+		Where("fk_from_branch_id = ? AND transfer_date >= ? AND transfer_date <= ?", branchID, startDateUnix, endDateUnix).
+		Joins("left join inventories on inventories.inventory_id = inventory_transfers.fk_inventory_id").
+		Joins("left join branches on branches.branch_id = inventory_transfers.fk_to_branch_id").
+		Count(&total).Limit(limit).Offset(offset).Scan(&data).Error; err != nil {
 		return nil, 0, err
 	}
 
@@ -125,7 +131,7 @@ func (r *inventoryTransferRepository) GetAll(page int, limit int) ([]schema.Inve
 // Update implements PriceRepositoryImpl.
 func (r *inventoryTransferRepository) Update(transfer *schema.InventoryTransfer) error {
 	if err := r.db.Save(&transfer).Error; err != nil {
-		if errors.Is(gorm.ErrDuplicatedKey, err) {
+		if errors.Is(err, gorm.ErrDuplicatedKey) {
 			return exception.ErrDuplicateEntry
 		}
 		return exception.ErrInternal
