@@ -1,16 +1,15 @@
 package inventory
 
 type InventoryCreateDto struct {
-	Name     string  `json:"name"`
-	Quantity int     `json:"quantity"`
-	Price    float64 `json:"price"`
+	ProductID    string `json:"product_id" validate:"required"`
+	Quantity     int    `json:"quantity"`
+	RestockLevel int    `json:"restock_level"`
 }
 
 type InventoryUpdateDto struct {
-	Name     *string  `json:"name,omitempty"`
-	Quantity *int     `json:"quantity,omitempty"`
-	Status   *string  `json:"status,omitempty"`
-	Price    *float64 `json:"price,omitempty"`
+	Quantity     *int  `json:"quantity,omitempty"`
+	RestockLevel *int  `json:"restock_level,omitempty"`
+	IsActive     *bool `json:"is_active,omitempty"`
 }
 
 var (

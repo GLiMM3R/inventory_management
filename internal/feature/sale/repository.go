@@ -2,7 +2,6 @@ package sale
 
 import (
 	"errors"
-	"fmt"
 	"inverntory_management/internal/database/schema"
 	"inverntory_management/internal/exception"
 
@@ -27,39 +26,39 @@ func NewSaleRepository(db *gorm.DB) SaleRepositoryImpl {
 
 // Create implements PriceRepositoryImpl.
 func (r *saleRepository) Create(sale *schema.Sale) error {
-	return r.db.Transaction(func(tx *gorm.DB) error {
-		var existingInventory schema.Inventory
+	// return r.db.Transaction(func(tx *gorm.DB) error {
+	// 	var existingInventory schema.Inventory
 
-		if err := r.db.First(&existingInventory, "inventory_id = ?", sale.InventoryID).Error; err != nil {
-			if errors.Is(err, gorm.ErrRecordNotFound) {
-				return exception.ErrNotFound
-			}
-			return exception.ErrInternal
-		}
+	// 	if err := r.db.First(&existingInventory, "inventory_id = ?", sale.InventoryID).Error; err != nil {
+	// 		if errors.Is(err, gorm.ErrRecordNotFound) {
+	// 			return exception.ErrNotFound
+	// 		}
+	// 		return exception.ErrInternal
+	// 	}
 
-		if sale.Quantity >= existingInventory.Quantity {
-			if err := tx.Model(&schema.Inventory{}).Where("inventory_id = ?", sale.InventoryID).
-				Update("status", "sold").Error; err != nil {
-				return exception.ErrInternal
-			}
-		}
+	// 	if sale.Quantity >= existingInventory.Quantity {
+	// 		if err := tx.Model(&schema.Inventory{}).Where("inventory_id = ?", sale.InventoryID).
+	// 			Update("status", "sold").Error; err != nil {
+	// 			return exception.ErrInternal
+	// 		}
+	// 	}
 
-		quantityFloat := float64(sale.Quantity)
-		sale.TotalPrice = quantityFloat * existingInventory.Price
+	// 	quantityFloat := float64(sale.Quantity)
+	// 	sale.TotalPrice = quantityFloat * existingInventory.Price
 
-		if err := tx.Model(&schema.Inventory{}).Where("inventory_id = ?", sale.InventoryID).UpdateColumn("quantity", gorm.Expr("quantity - ?", sale.Quantity)).Error; err != nil {
-			fmt.Println("here=>", err)
-			return exception.ErrInternal
-		}
+	// 	if err := tx.Model(&schema.Inventory{}).Where("inventory_id = ?", sale.InventoryID).UpdateColumn("quantity", gorm.Expr("quantity - ?", sale.Quantity)).Error; err != nil {
+	// 		return exception.ErrInternal
+	// 	}
 
-		if err := tx.Create(&sale).Error; err != nil {
-			if errors.Is(err, gorm.ErrDuplicatedKey) {
-				return exception.ErrDuplicateEntry
-			}
-			return exception.ErrInternal
-		}
-		return nil
-	})
+	// 	if err := tx.Create(&sale).Error; err != nil {
+	// 		if errors.Is(err, gorm.ErrDuplicatedKey) {
+	// 			return exception.ErrDuplicateEntry
+	// 		}
+	// 		return exception.ErrInternal
+	// 	}
+	// 	return nil
+	// })
+	return nil
 }
 
 // FindByID implements PriceRepositoryImpl.

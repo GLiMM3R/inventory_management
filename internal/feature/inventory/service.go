@@ -5,8 +5,6 @@ import (
 	"inverntory_management/internal/feature/price"
 	"inverntory_management/internal/feature/user"
 	"inverntory_management/internal/types"
-	"inverntory_management/internal/utils"
-	"time"
 
 	"github.com/google/uuid"
 )
@@ -64,11 +62,8 @@ func (s *inventoryService) Create(dto InventoryCreateDto, userClaims *types.User
 	newInventory := &schema.Inventory{
 		InventoryID: uuid.NewString(),
 		BranchID:    user.BranchID,
-		Name:        dto.Name,
-		SKU:         utils.GenerateSKU(dto.Name, 12, "SKU-"),
+		ProductID:   dto.ProductID,
 		Quantity:    dto.Quantity,
-		Price:       dto.Price,
-		Status:      ACTIVE,
 	}
 
 	if err := s.inventoryRepo.Create(newInventory); err != nil {
@@ -85,37 +80,20 @@ func (s *inventoryService) Update(inventory_id string, dto InventoryUpdateDto) e
 		return err
 	}
 
-	if dto.Name != nil {
-		existingInventory.Name = *dto.Name
-	}
-
 	if dto.Quantity != nil {
 		existingInventory.Quantity = *dto.Quantity
 	}
 
-	if dto.Price != nil {
-		existingInventory.Price = *dto.Price
+	if dto.RestockLevel != nil {
+		existingInventory.RestockLevel = *dto.RestockLevel
 	}
 
-	if dto.Status != nil {
-		existingInventory.Status = *dto.Status
+	if dto.IsActive != nil {
+		existingInventory.IsActive = *dto.IsActive
 	}
 
 	if err := s.inventoryRepo.Update(existingInventory); err != nil {
 		return err
-	}
-
-	if dto.Price != nil {
-		newPrice := &schema.Price{
-			PriceID:       uuid.NewString(),
-			InventoryID:   inventory_id,
-			Price:         *dto.Price,
-			EffectiveDate: time.Now().Unix(),
-		}
-
-		if err := s.priceRepo.Create(newPrice); err != nil {
-			return err
-		}
 	}
 
 	return nil

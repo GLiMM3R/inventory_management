@@ -46,8 +46,8 @@ func (r *inventoryTransferRepository) Create(transfer *schema.InventoryTransfer)
 
 		var existingInventory *schema.Inventory
 
-		tx.Where("fk_branch_id = ?", transfer.ToBranchID).Where("name = ?", inventory.Name).
-			Where("sku = ?", inventory.SKU).First(&existingInventory)
+		tx.Where("fk_branch_id = ?", transfer.ToBranchID).Where("fk_product_id = ?", inventory.ProductID).
+			First(&existingInventory)
 
 		if existingInventory.ID != 0 {
 			existingInventory.Quantity = existingInventory.Quantity + transfer.Quantity
@@ -60,13 +60,12 @@ func (r *inventoryTransferRepository) Create(transfer *schema.InventoryTransfer)
 			}
 		} else {
 			newInventory := &schema.Inventory{
-				InventoryID: uuid.NewString(),
-				BranchID:    transfer.ToBranchID,
-				Name:        inventory.Name,
-				SKU:         inventory.SKU,
-				Quantity:    transfer.Quantity,
-				Price:       inventory.Price,
-				Status:      "active",
+				InventoryID:  uuid.NewString(),
+				BranchID:     transfer.ToBranchID,
+				ProductID:    transfer.Inventory.ProductID,
+				Quantity:     transfer.Quantity,
+				RestockLevel: 0,
+				IsActive:     true,
 			}
 
 			if err := tx.Create(&newInventory).Error; err != nil {
