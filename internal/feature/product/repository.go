@@ -6,6 +6,7 @@ import (
 	"inverntory_management/internal/exception"
 
 	"gorm.io/gorm"
+	"gorm.io/gorm/clause"
 )
 
 type ProductRepositoryImpl interface {
@@ -27,7 +28,7 @@ func NewProductRepository(db *gorm.DB) ProductRepositoryImpl {
 // Create implements ProductRepositoryImpl.
 func (r *productRepository) Create(product *schema.Product) error {
 	if err := r.db.Create(&product).Error; err != nil {
-		return exception.ErrInternal
+		return err
 	}
 	return nil
 }
@@ -43,7 +44,7 @@ func (r *productRepository) FindAll(page int, limit int) ([]schema.Product, int6
 	var total int64
 	offset := (page - 1) * limit
 
-	query := r.db.Model(&schema.Price{})
+	query := r.db.Model(&schema.Product{})
 
 	if err := query.Count(&total).Limit(limit).Offset(offset).Find(&data).Error; err != nil {
 		return nil, 0, err
@@ -56,7 +57,7 @@ func (r *productRepository) FindAll(page int, limit int) ([]schema.Product, int6
 func (r *productRepository) FindById(product_id string) (*schema.Product, error) {
 	var product *schema.Product
 
-	if err := r.db.First(&product, "product_id = ?", product_id).Error; err != nil {
+	if err := r.db.Preload("Variants").Preload("Variants.Price").Preload(clause.Associations).First(&product, "product_id = ?", product_id).Error; err != nil {
 		if errors.Is(err, gorm.ErrRecordNotFound) {
 			return nil, exception.ErrNotFound
 		}
@@ -68,7 +69,7 @@ func (r *productRepository) FindById(product_id string) (*schema.Product, error)
 // Update implements ProductRepositoryImpl.
 func (r *productRepository) Update(product *schema.Product) error {
 	if err := r.db.Save(&product).Error; err != nil {
-		if errors.Is(gorm.ErrDuplicatedKey, err) {
+		if errors.Is(err, gorm.ErrDuplicatedKey) {
 			return exception.ErrDuplicateEntry
 		}
 		return exception.ErrInternal

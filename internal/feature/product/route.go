@@ -8,7 +8,9 @@ import (
 
 func InitProductRoutes(e *echo.Echo, service ProductServiceImpl) {
 	h := NewProductHandler(service)
-	r := e.Group("/prices")
+	r := e.Group("/products")
 	r.Use(middleware.JWTAccessMiddleware)
+	r.GET("", h.GetProducts)
+	r.GET("/:id", h.GetProduct)
 	r.POST("", h.CreateProduct)
 }

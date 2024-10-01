@@ -25,12 +25,22 @@ func NewProductService(productRepo ProductRepositoryImpl) ProductServiceImpl {
 
 // FindAll implements ProductServiceImpl.
 func (s *productService) FindAll(page int, limit int) ([]schema.Product, int64, error) {
-	panic("unimplemented")
+	products, total, err := s.productRepo.FindAll(page, limit)
+	if err != nil {
+		return nil, 0, err
+	}
+
+	return products, total, nil
 }
 
 // FindByID implements ProductServiceImpl.
 func (s *productService) FindByID(product_id string) (*schema.Product, error) {
-	panic("unimplemented")
+	product, err := s.productRepo.FindById(product_id)
+	if err != nil {
+		return nil, err
+	}
+
+	return product, nil
 }
 
 // Update implements ProductServiceImpl.
@@ -41,6 +51,7 @@ func (s *productService) Update(product schema.Product) error {
 // Create implements ProductRepositoryImpl.
 func (s *productService) Create(product ProductCreateDto) error {
 	newProduct := schema.Product{
+		ProductID:   uuid.NewString(),
 		Name:        product.Name,
 		CategoryID:  product.CategoryID,
 		Description: product.Description,
@@ -48,31 +59,33 @@ func (s *productService) Create(product ProductCreateDto) error {
 
 	for _, variant := range product.Variants {
 		newVariantID := uuid.NewString()
+		SKU := product.Name
 
-		newProduct.Variants = append(newProduct.Variants, schema.Variant{
+		newVariant := schema.Variant{
 			VariantID:  newVariantID,
-			SKU:        utils.GenerateSKU(product.Name, 10, "SKU"),
-			Price:      make([]schema.PriceHistory, 0),
 			Attributes: make([]schema.Attribute, len(variant.Attributes)),
-		})
+			Price:      make([]schema.PriceHistory, 1),
+		}
 
 		for idx, attribute := range variant.Attributes {
-			newProduct.Variants[idx].Attributes = append(newProduct.Variants[idx].Attributes, schema.Attribute{
+			SKU += " " + attribute.Value
+			newVariant.Attributes[idx] = schema.Attribute{
 				AttributeID: uuid.NewString(),
 				Attribute:   attribute.Attribute,
 				Value:       attribute.Value,
-			})
+			}
 		}
 
-		newPrice := schema.PriceHistory{
+		newVariant.SKU = utils.GenerateSKU(SKU, 14, "SKU-", 3)
+
+		newProduct.Variants = append(newProduct.Variants, newVariant)
+
+		newVariant.Price[0] = schema.PriceHistory{
 			PriceID:       uuid.NewString(),
-			VariantID:     newVariantID,
 			NewPrice:      variant.Price,
 			OldPrice:      0,
 			EffectiveDate: time.Now().Unix(),
 		}
-
-		newProduct.Variants[len(newProduct.Variants)-1].Price = append(newProduct.Variants[len(newProduct.Variants)-1].Price, newPrice)
 	}
 
 	if err := s.productRepo.Create(&newProduct); err != nil {

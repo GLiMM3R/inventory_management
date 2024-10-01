@@ -24,16 +24,15 @@ type Variant struct {
 	CreatedAt  int64          `json:"created_at" gorm:"autoCreateTime;column:created_at"`
 	UpdatedAt  int64          `json:"updated_at" gorm:"autoUpdateTime;column:updated_at"`
 	DeletedAt  gorm.DeletedAt `json:"deleted_at" gorm:"index;column:deleted_at"`
-	Attributes []Attribute    `json:"attributes" gorm:"foreignKey:fk_variant_id"`
+	Attributes []Attribute    `json:"attributes" gorm:"foreignKey:fk_variant_id;references:variant_id"`
 	Price      []PriceHistory `json:"price" gorm:"foreignKey:fk_variant_id;references:variant_id"`
 	// Attributes []Attribute    `gorm:"many2many:variant_attributes;foreignKey:VariantID;joinForeignKey:fk_variant_id;References:AttributeID;joinReferences:fk_attribute_id"`
 }
 
 type Attribute struct {
-	ID          uint    `json:"-" gorm:"primaryKey;autoIncrement:true;column:id"`
-	AttributeID string  `json:"attribute_id" gorm:"primaryKey;unique;column:attribute_id"`
-	VariantID   string  `json:"variant_id" gorm:"index;column:fk_variant_id;"`
-	Variant     Variant `json:"variant" gorm:"foreignKey:fk_variant_id;references:variant_id"`
-	Attribute   string  `json:"attribute" gorm:"column:attribute"`
-	Value       string  `json:"value" gorm:"column:value"`
+	ID          uint   `json:"-" gorm:"primaryKey;autoIncrement:true;column:id"`
+	AttributeID string `json:"attribute_id" gorm:"primaryKey;unique;column:attribute_id"`
+	VariantID   string `json:"variant_id" gorm:"index;column:fk_variant_id;"`
+	Attribute   string `json:"attribute" gorm:"column:attribute"`
+	Value       string `json:"value" gorm:"column:value"`
 }

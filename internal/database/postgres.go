@@ -48,6 +48,7 @@ func InitPostgres() {
 		&schema.Inventory{},
 		&schema.Product{},
 		&schema.Variant{},
+		&schema.Attribute{},
 		&schema.Price{},
 		&schema.PriceHistory{},
 		&schema.Sale{},
