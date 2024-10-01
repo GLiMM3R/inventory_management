@@ -13,4 +13,5 @@ func InitProductRoutes(e *echo.Echo, service ProductServiceImpl) {
 	r.GET("", h.GetProducts)
 	r.GET("/:id", h.GetProduct)
 	r.POST("", h.CreateProduct)
+	r.POST("/:id/variants", h.AddVariant)
 }

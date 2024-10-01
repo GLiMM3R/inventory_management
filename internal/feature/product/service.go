@@ -9,10 +9,14 @@ import (
 )
 
 type ProductServiceImpl interface {
+	//product
 	FindAll(page, limit int) ([]schema.Product, int64, error)
 	FindByID(product_id string) (*schema.Product, error)
 	Create(product ProductCreateDto) error
 	Update(product schema.Product) error
+
+	//variant
+	AddVariant(product_id string, variant VariantCreateDto) error
 }
 
 type productService struct {
@@ -89,6 +93,47 @@ func (s *productService) Create(product ProductCreateDto) error {
 	}
 
 	if err := s.productRepo.Create(&newProduct); err != nil {
+		return err
+	}
+
+	return nil
+}
+
+// AddVariant implements ProductServiceImpl.
+func (s *productService) AddVariant(product_id string, variant VariantCreateDto) error {
+	product, err := s.productRepo.FindById(product_id)
+	if err != nil {
+		return err
+	}
+
+	SKU := product.Name
+
+	newVariant := schema.Variant{
+		VariantID:  uuid.NewString(),
+		ProductID:  product.ProductID,
+		Attributes: make([]schema.Attribute, len(variant.Attributes)),
+		Price:      make([]schema.PriceHistory, 1),
+	}
+
+	for idx, attribute := range variant.Attributes {
+		SKU += " " + attribute.Value
+		newVariant.Attributes[idx] = schema.Attribute{
+			AttributeID: uuid.NewString(),
+			Attribute:   attribute.Attribute,
+			Value:       attribute.Value,
+		}
+	}
+
+	newVariant.SKU = utils.GenerateSKU(SKU, 14, "SKU-", 3)
+
+	newVariant.Price[0] = schema.PriceHistory{
+		PriceID:       uuid.NewString(),
+		NewPrice:      variant.Price,
+		OldPrice:      0,
+		EffectiveDate: time.Now().Unix(),
+	}
+
+	if err := s.productRepo.CreateVariant(&newVariant); err != nil {
 		return err
 	}
 

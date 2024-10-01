@@ -26,7 +26,6 @@ type Variant struct {
 	DeletedAt  gorm.DeletedAt `json:"deleted_at" gorm:"index;column:deleted_at"`
 	Attributes []Attribute    `json:"attributes" gorm:"foreignKey:fk_variant_id;references:variant_id"`
 	Price      []PriceHistory `json:"price" gorm:"foreignKey:fk_variant_id;references:variant_id"`
-	// Attributes []Attribute    `gorm:"many2many:variant_attributes;foreignKey:VariantID;joinForeignKey:fk_variant_id;References:AttributeID;joinReferences:fk_attribute_id"`
 }
 
 type Attribute struct {

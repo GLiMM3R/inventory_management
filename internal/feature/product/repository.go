@@ -10,11 +10,17 @@ import (
 )
 
 type ProductRepositoryImpl interface {
+	//product
 	Create(product *schema.Product) error
 	Update(product *schema.Product) error
-	Delete(id uint) error
+	Delete(product_id string) error
 	FindById(product_id string) (*schema.Product, error)
 	FindAll(page int, limit int) ([]schema.Product, int64, error)
+
+	//variant
+	CreateVariant(variant *schema.Variant) error
+	UpdateVariant(variant *schema.Variant) error
+	DeleteVariant(product_id string) error
 }
 
 type productRepository struct {
@@ -28,13 +34,16 @@ func NewProductRepository(db *gorm.DB) ProductRepositoryImpl {
 // Create implements ProductRepositoryImpl.
 func (r *productRepository) Create(product *schema.Product) error {
 	if err := r.db.Create(&product).Error; err != nil {
+		if errors.Is(err, gorm.ErrDuplicatedKey) {
+			return exception.ErrDuplicateEntry
+		}
 		return err
 	}
 	return nil
 }
 
 // Delete implements ProductRepositoryImpl.
-func (r *productRepository) Delete(id uint) error {
+func (r *productRepository) Delete(product_id string) error {
 	panic("unimplemented")
 }
 
@@ -69,6 +78,33 @@ func (r *productRepository) FindById(product_id string) (*schema.Product, error)
 // Update implements ProductRepositoryImpl.
 func (r *productRepository) Update(product *schema.Product) error {
 	if err := r.db.Save(&product).Error; err != nil {
+		if errors.Is(err, gorm.ErrDuplicatedKey) {
+			return exception.ErrDuplicateEntry
+		}
+		return exception.ErrInternal
+	}
+	return nil
+}
+
+// CreateVariant implements ProductRepositoryImpl.
+func (r *productRepository) CreateVariant(variant *schema.Variant) error {
+	if err := r.db.Create(&variant).Error; err != nil {
+		if errors.Is(err, gorm.ErrDuplicatedKey) {
+			return exception.ErrDuplicateEntry
+		}
+		return err
+	}
+	return nil
+}
+
+// DeleteVariant implements ProductRepositoryImpl.
+func (r *productRepository) DeleteVariant(product_id string) error {
+	panic("unimplemented")
+}
+
+// UpdateVariant implements ProductRepositoryImpl.
+func (r *productRepository) UpdateVariant(variant *schema.Variant) error {
+	if err := r.db.Save(&variant).Error; err != nil {
 		if errors.Is(err, gorm.ErrDuplicatedKey) {
 			return exception.ErrDuplicateEntry
 		}
