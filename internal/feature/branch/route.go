@@ -11,8 +11,9 @@ func InitBranchRoutes(e *echo.Echo, service BranchServiceImpl) {
 	r := e.Group("/branches")
 	r.POST("", h.CreateBranch)
 
-	r.Use(middleware.JWTAccessMiddleware)
-	r.GET("", h.GetBranches)
-	r.GET("/:id", h.GetBranchByID)
-	r.PATCH("/:id", h.UpdateBranch)
+	protected := r.Group("")
+	protected.Use(middleware.JWTAccessMiddleware)
+	protected.GET("", h.GetBranches)
+	protected.GET("/:id", h.GetBranchByID)
+	protected.PATCH("/:id", h.UpdateBranch)
 }

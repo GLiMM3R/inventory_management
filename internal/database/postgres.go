@@ -41,7 +41,18 @@ func InitPostgres() {
 		panic("Failed to connect database")
 	}
 
-	if err := DB.AutoMigrate(&schema.User{}, &schema.Branch{}, &schema.Inventory{}, &schema.Price{}, &schema.Sale{}, &schema.InventoryTransfer{}); err != nil {
+	if err := DB.AutoMigrate(
+		&schema.User{},
+		&schema.Branch{},
+		&schema.Category{},
+		&schema.Inventory{},
+		&schema.Product{},
+		&schema.Variant{},
+		&schema.Price{},
+		&schema.PriceHistory{},
+		&schema.Sale{},
+		&schema.InventoryTransfer{},
+	); err != nil {
 		panic("Failed to migrate database")
 	}
 }

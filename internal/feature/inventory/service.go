@@ -62,7 +62,7 @@ func (s *inventoryService) Create(dto InventoryCreateDto, userClaims *types.User
 	newInventory := &schema.Inventory{
 		InventoryID: uuid.NewString(),
 		BranchID:    user.BranchID,
-		ProductID:   dto.ProductID,
+		VariantID:   dto.ProductID,
 		Quantity:    dto.Quantity,
 	}
 

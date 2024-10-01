@@ -4,7 +4,7 @@ import "gorm.io/gorm"
 
 type Product struct {
 	ID          uint           `json:"-" gorm:"primaryKey;autoIncrement:true;column:id"`
-	ProductID   string         `json:"variant_id" gorm:"primaryKey;unique;column:variant_id"`
+	ProductID   string         `json:"product_id" gorm:"primaryKey;unique;column:product_id"`
 	Name        string         `json:"name" gorm:"column:name"`
 	CategoryID  string         `json:"category_id" gorm:"column:fk_category_id"`
 	Category    Category       `json:"-" gorm:"foreignKey:fk_category_id;references:category_id"`
@@ -12,31 +12,28 @@ type Product struct {
 	CreatedAt   int64          `json:"created_at" gorm:"autoCreateTime;column:created_at"`
 	UpdatedAt   int64          `json:"updated_at" gorm:"autoUpdateTime;column:updated_at"`
 	DeletedAt   gorm.DeletedAt `json:"deleted_at" gorm:"index;column:deleted_at"`
+	Variants    []Variant      `json:"varaints" gorm:"foreignKey:fk_product_id;references:product_id"`
 }
 
-type ProductVariant struct {
-	ID        uint           `json:"-" gorm:"primaryKey;autoIncrement:true;column:id"`
-	VariantID string         `json:"variant_id" gorm:"primaryKey;unique;column:variant_id"`
-	ProductID string         `json:"product_id" gorm:"column:fk_product_id;"`
-	Product   Product        `json:"-" gorm:"foreignKey:fk_product_id;references:product_id"`
-	SKU       string         `json:"sku" gorm:"column:sku;unique;"`
-	Status    string         `json:"status" gorm:"column:status"`
-	CreatedAt int64          `json:"created_at" gorm:"autoCreateTime;column:created_at"`
-	UpdatedAt int64          `json:"updated_at" gorm:"autoUpdateTime;column:updated_at"`
-	DeletedAt gorm.DeletedAt `json:"deleted_at" gorm:"index;column:deleted_at"`
+type Variant struct {
+	ID         uint           `json:"-" gorm:"primaryKey;autoIncrement:true;column:id"`
+	VariantID  string         `json:"variant_id" gorm:"primaryKey;unique;column:variant_id"`
+	ProductID  string         `json:"product_id" gorm:"column:fk_product_id;"`
+	SKU        string         `json:"sku" gorm:"unique;column:sku;"`
+	Status     string         `json:"status" gorm:"column:status"`
+	CreatedAt  int64          `json:"created_at" gorm:"autoCreateTime;column:created_at"`
+	UpdatedAt  int64          `json:"updated_at" gorm:"autoUpdateTime;column:updated_at"`
+	DeletedAt  gorm.DeletedAt `json:"deleted_at" gorm:"index;column:deleted_at"`
+	Attributes []Attribute    `json:"attributes" gorm:"foreignKey:fk_variant_id"`
+	Price      []PriceHistory `json:"price" gorm:"foreignKey:fk_variant_id;references:variant_id"`
+	// Attributes []Attribute    `gorm:"many2many:variant_attributes;foreignKey:VariantID;joinForeignKey:fk_variant_id;References:AttributeID;joinReferences:fk_attribute_id"`
 }
 
-type VariantOption struct {
-	ID          uint   `json:"-" gorm:"primaryKey;autoIncrement:true;column:id"`
-	OptionID    string `json:"option_id" gorm:"primaryKey;unique;column:option_id"`
-	OptionName  string `json:"option_name" gorm:"column:option_name"`
-	OptionValue string `json:"option_value" gorm:"column:option_value"`
-}
-
-type VariantOptionAssignment struct {
-	ID        uint           `json:"-" gorm:"primaryKey;autoIncrement:true;column:id"`
-	VariantID string         `json:"variant_id" gorm:"column:fk_variant_id;"`
-	Variant   ProductVariant `json:"variant" gorm:"foreignKey:fk_variant_id;references:variant_id"`
-	OptionID  string         `json:"option_id" gorm:"column:fk_option_id;"`
-	Option    VariantOption  `json:"option" gorm:"foreignKey:fk_option_id;references:option_id"`
+type Attribute struct {
+	ID          uint    `json:"-" gorm:"primaryKey;autoIncrement:true;column:id"`
+	AttributeID string  `json:"attribute_id" gorm:"primaryKey;unique;column:attribute_id"`
+	VariantID   string  `json:"variant_id" gorm:"index;column:fk_variant_id;"`
+	Variant     Variant `json:"variant" gorm:"foreignKey:fk_variant_id;references:variant_id"`
+	Attribute   string  `json:"attribute" gorm:"column:attribute"`
+	Value       string  `json:"value" gorm:"column:value"`
 }

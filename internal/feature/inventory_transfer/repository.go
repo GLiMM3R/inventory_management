@@ -46,7 +46,7 @@ func (r *inventoryTransferRepository) Create(transfer *schema.InventoryTransfer)
 
 		var existingInventory *schema.Inventory
 
-		tx.Where("fk_branch_id = ?", transfer.ToBranchID).Where("fk_product_id = ?", inventory.ProductID).
+		tx.Where("fk_branch_id = ?", transfer.ToBranchID).Where("fk_variant_id = ?", inventory.VariantID).
 			First(&existingInventory)
 
 		if existingInventory.ID != 0 {
@@ -62,7 +62,7 @@ func (r *inventoryTransferRepository) Create(transfer *schema.InventoryTransfer)
 			newInventory := &schema.Inventory{
 				InventoryID:  uuid.NewString(),
 				BranchID:     transfer.ToBranchID,
-				ProductID:    transfer.Inventory.ProductID,
+				VariantID:    transfer.Inventory.VariantID,
 				Quantity:     transfer.Quantity,
 				RestockLevel: 0,
 				IsActive:     true,

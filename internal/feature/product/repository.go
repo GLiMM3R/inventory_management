@@ -67,5 +67,11 @@ func (r *productRepository) FindById(product_id string) (*schema.Product, error)
 
 // Update implements ProductRepositoryImpl.
 func (r *productRepository) Update(product *schema.Product) error {
-	panic("unimplemented")
+	if err := r.db.Save(&product).Error; err != nil {
+		if errors.Is(gorm.ErrDuplicatedKey, err) {
+			return exception.ErrDuplicateEntry
+		}
+		return exception.ErrInternal
+	}
+	return nil
 }
