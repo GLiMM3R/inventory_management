@@ -67,11 +67,7 @@ func (h *ProductHandler) CreateProduct(c echo.Context) error {
 	}
 
 	if err := h.productService.Create(*dto); err != nil {
-		return c.JSON(http.StatusInternalServerError, types.Response{
-			Data:     err.Error(),
-			Status:   http.StatusInternalServerError,
-			Messages: "Error",
-		})
+		return exception.HandleError(c, err)
 	}
 
 	return c.JSON(http.StatusCreated, types.Response{

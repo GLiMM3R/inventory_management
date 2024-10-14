@@ -91,9 +91,9 @@ func (s *authService) Login(request *AuthRequest) (*AuthResponse, error) {
 		return nil, exception.ErrInvalidCredentials
 	}
 
-	if err := s.VerifyOTP(user.UserID, request.OTP); err != nil {
-		return nil, err
-	}
+	// if err := s.VerifyOTP(user.UserID, request.OTP); err != nil {
+	// 	return nil, err
+	// }
 
 	accessToken, err := service.GenerateAccessToken(types.TokenPayload{UserID: user.UserID, Username: user.Username})
 	if err != nil {

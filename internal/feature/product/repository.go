@@ -66,7 +66,7 @@ func (r *productRepository) FindAll(page int, limit int) ([]schema.Product, int6
 func (r *productRepository) FindById(product_id string) (*schema.Product, error) {
 	var product *schema.Product
 
-	if err := r.db.Preload("Variants").Preload("Variants.Price").Preload(clause.Associations).First(&product, "product_id = ?", product_id).Error; err != nil {
+	if err := r.db.Preload("Variants").Preload("Variants.Attributes").Preload("Variants.Price").Preload(clause.Associations).First(&product, "product_id = ?", product_id).Error; err != nil {
 		if errors.Is(err, gorm.ErrRecordNotFound) {
 			return nil, exception.ErrNotFound
 		}
