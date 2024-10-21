@@ -1,10 +1,15 @@
 package schema
 
-import "gorm.io/gorm"
+import (
+	"gorm.io/gorm"
+)
+
+type Images []string
 
 type Product struct {
 	ID          uint           `json:"-" gorm:"primaryKey;autoIncrement:true;column:id"`
 	ProductID   string         `json:"product_id" gorm:"primaryKey;unique;column:product_id"`
+	Images      Images         `json:"images" gorm:"column:images;serializer:json"`
 	Name        string         `json:"name" gorm:"column:name"`
 	CategoryID  string         `json:"category_id" gorm:"column:fk_category_id"`
 	Category    Category       `json:"-" gorm:"foreignKey:fk_category_id;references:category_id"`
@@ -20,6 +25,7 @@ type Variant struct {
 	VariantID  string         `json:"variant_id" gorm:"primaryKey;unique;column:variant_id"`
 	ProductID  string         `json:"product_id" gorm:"column:fk_product_id;"`
 	SKU        string         `json:"sku" gorm:"unique;column:sku;"`
+	Image      string         `json:"image" gorm:"column:image"`
 	Status     string         `json:"status" gorm:"column:status"`
 	CreatedAt  int64          `json:"created_at" gorm:"autoCreateTime;column:created_at"`
 	UpdatedAt  int64          `json:"updated_at" gorm:"autoUpdateTime;column:updated_at"`

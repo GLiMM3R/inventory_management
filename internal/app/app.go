@@ -5,6 +5,7 @@ import (
 	"inverntory_management/internal/database"
 	"inverntory_management/internal/feature/auth"
 	"inverntory_management/internal/feature/branch"
+	files "inverntory_management/internal/feature/file"
 	"inverntory_management/internal/feature/inventory"
 	"inverntory_management/internal/feature/inventory_transfer"
 	"inverntory_management/internal/feature/price"
@@ -65,6 +66,7 @@ func Initialize() (*echo.Echo, error) {
 	inventory_transfer.InitInventoryTransferRoutes(e, transferService)
 	report.InitReportRoutes(e, reportService)
 	product.InitProductRoutes(e, productService)
+	files.InitFileRoutes(e)
 
 	return e, nil
 }
