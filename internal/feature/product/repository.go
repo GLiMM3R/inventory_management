@@ -55,7 +55,7 @@ func (r *productRepository) FindAll(page int, limit int) ([]schema.Product, int6
 
 	query := r.db.Model(&schema.Product{})
 
-	if err := query.Count(&total).Limit(limit).Offset(offset).Find(&data).Error; err != nil {
+	if err := query.Preload("Category").Count(&total).Limit(limit).Offset(offset).Find(&data).Error; err != nil {
 		return nil, 0, err
 	}
 

@@ -8,7 +8,9 @@ import (
 	"inverntory_management/internal/feature/user"
 	"inverntory_management/internal/service"
 	"inverntory_management/internal/types"
+	"inverntory_management/pkg/errors"
 	"math/rand"
+	"net/http"
 	"strings"
 	"time"
 
@@ -84,11 +86,11 @@ func (s *authService) Login(request *AuthRequest) (*AuthResponse, error) {
 
 	user, err := s.userRepo.FindByUsername(request.Username)
 	if err != nil {
-		return nil, exception.ErrInvalidCredentials
+		return nil, errors.NewAppError(http.StatusUnauthorized, "username or password is invalid")
 	}
 
 	if err := bcrypt.CompareHashAndPassword([]byte(user.Password), []byte(request.Password)); err != nil {
-		return nil, exception.ErrInvalidCredentials
+		return nil, errors.NewAppError(http.StatusUnauthorized, "username or password is invalid")
 	}
 
 	// if err := s.VerifyOTP(user.UserID, request.OTP); err != nil {
@@ -97,16 +99,17 @@ func (s *authService) Login(request *AuthRequest) (*AuthResponse, error) {
 
 	accessToken, err := service.GenerateAccessToken(types.TokenPayload{UserID: user.UserID, Username: user.Username})
 	if err != nil {
-		return nil, exception.ErrInternal
+		return nil, errors.NewInternalServerError("internal server error")
+
 	}
 
 	refreshToken, err := service.GenerateRefreshToken(user.UserID)
 	if err != nil {
-		return nil, exception.ErrInternal
+		return nil, errors.NewInternalServerError("internal server error")
 	}
 
 	if err := s.redisClient.Set(ctx, "refresh:"+refreshToken, "active", time.Duration(config.AppConfig.REFRESH_EXPIRATION)*time.Second).Err(); err != nil {
-		return nil, exception.ErrInternal
+		return nil, errors.NewInternalServerError("internal server error")
 	}
 
 	expiresIn := time.Now().Add(time.Duration(config.AppConfig.ACCESS_EXPIRATION) * time.Second).Unix()

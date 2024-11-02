@@ -4,6 +4,7 @@ type ProductCreateDto struct {
 	Name        string             `json:"name" validate:"required"`
 	CategoryID  string             `json:"category_id" validate:"required"`
 	Description string             `json:"description"`
+	Images      []string           `json:"images"`
 	Variants    []VariantCreateDto `json:"variants"`
 }
 
@@ -20,6 +21,7 @@ type AttributeCreateDto struct {
 type ProductResponse struct {
 	ProductID   string            `json:"product_id"`
 	Name        string            `json:"name"`
+	Images      []string          `json:"images"`
 	Category    string            `json:"category"`
 	Description string            `json:"description"`
 	Variants    []VariantResponse `json:"variants"`

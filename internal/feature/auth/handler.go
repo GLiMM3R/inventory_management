@@ -1,10 +1,10 @@
 package auth
 
 import (
-	"fmt"
 	"inverntory_management/internal/exception"
 	"inverntory_management/internal/middleware"
 	"inverntory_management/internal/types"
+	"inverntory_management/pkg/errors"
 	"net/http"
 
 	"github.com/labstack/echo"
@@ -21,17 +21,16 @@ func NewAuthHandler(service AuthServiceImpl) AuthHandler {
 func (h *AuthHandler) Login(c echo.Context) error {
 	request := new(AuthRequest)
 	if err := c.Bind(request); err != nil {
-		return exception.HandleError(c, exception.ErrInvalidData)
+		return errors.NewBadRequestError(err.Error())
 	}
 
 	if err := c.Validate(request); err != nil {
-		fmt.Println(err)
-		return exception.HandleError(c, exception.ErrInvalidData)
+		return errors.NewInternalServerError(err.Error())
 	}
 
 	response, err := h.service.Login(request)
 	if err != nil {
-		return exception.HandleError(c, err)
+		return err
 	}
 
 	return c.JSON(http.StatusOK, types.Response{

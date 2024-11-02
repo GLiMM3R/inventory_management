@@ -1,6 +1,7 @@
 package product
 
 import (
+	"fmt"
 	"inverntory_management/internal/database/schema"
 	"inverntory_management/internal/utils"
 	"time"
@@ -10,7 +11,7 @@ import (
 
 type ProductServiceImpl interface {
 	//product
-	FindAll(page, limit int) ([]schema.Product, int64, error)
+	FindAll(page, limit int) ([]ProductResponse, int64, error)
 	FindByID(product_id string) (*schema.Product, error)
 	Create(product ProductCreateDto) error
 	Update(product schema.Product) error
@@ -28,13 +29,29 @@ func NewProductService(productRepo ProductRepositoryImpl) ProductServiceImpl {
 }
 
 // FindAll implements ProductServiceImpl.
-func (s *productService) FindAll(page int, limit int) ([]schema.Product, int64, error) {
+func (s *productService) FindAll(page int, limit int) ([]ProductResponse, int64, error) {
 	products, total, err := s.productRepo.FindAll(page, limit)
 	if err != nil {
 		return nil, 0, err
 	}
 
-	return products, total, nil
+	response := make([]ProductResponse, len(products))
+
+	for i, product := range products {
+		fmt.Println(product.Images)
+		response[i] = ProductResponse{
+			ProductID:   product.ProductID,
+			Name:        product.Name,
+			Images:      product.Images,
+			Category:    product.Category.Name,
+			Description: product.Description,
+			Variants:    make([]VariantResponse, len(product.Variants)),
+			CreatedAt:   product.CreatedAt,
+			UpdatedAt:   product.UpdatedAt,
+		}
+	}
+
+	return response, total, nil
 }
 
 // FindByID implements ProductServiceImpl.
@@ -59,6 +76,7 @@ func (s *productService) Create(product ProductCreateDto) error {
 		Name:        product.Name,
 		CategoryID:  product.CategoryID,
 		Description: product.Description,
+		Images:      product.Images,
 	}
 
 	for _, variant := range product.Variants {

@@ -15,6 +15,8 @@ import (
 	user "inverntory_management/internal/feature/user"
 	"inverntory_management/internal/utils"
 
+	custom "inverntory_management/internal/middleware"
+
 	"github.com/labstack/echo"
 	"github.com/labstack/echo/middleware"
 )
@@ -28,8 +30,10 @@ func Initialize() (*echo.Echo, error) {
 	e.Validator = utils.NewValidator()
 
 	// Middleware
+	e.Use(middleware.CORS())
 	e.Use(middleware.Logger())
 	e.Use(middleware.Recover())
+	e.Use(custom.ErrorHandler)
 
 	// Initialize database
 	database.InitPostgres()
