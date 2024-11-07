@@ -4,6 +4,7 @@ import (
 	"errors"
 	"inverntory_management/internal/database/schema"
 	"inverntory_management/internal/exception"
+	custom "inverntory_management/pkg/errors"
 
 	"gorm.io/gorm"
 	"gorm.io/gorm/clause"
@@ -35,9 +36,9 @@ func NewProductRepository(db *gorm.DB) ProductRepositoryImpl {
 func (r *productRepository) Create(product *schema.Product) error {
 	if err := r.db.Create(&product).Error; err != nil {
 		if errors.Is(err, gorm.ErrDuplicatedKey) {
-			return exception.ErrDuplicateEntry
+			return custom.NewConflictError("Duplicate key")
 		}
-		return err
+		return custom.NewInternalServerError()
 	}
 	return nil
 }

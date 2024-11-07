@@ -99,17 +99,17 @@ func (s *authService) Login(request *AuthRequest) (*AuthResponse, error) {
 
 	accessToken, err := service.GenerateAccessToken(types.TokenPayload{UserID: user.UserID, Username: user.Username})
 	if err != nil {
-		return nil, errors.NewInternalServerError("internal server error")
+		return nil, errors.NewInternalServerError()
 
 	}
 
 	refreshToken, err := service.GenerateRefreshToken(user.UserID)
 	if err != nil {
-		return nil, errors.NewInternalServerError("internal server error")
+		return nil, errors.NewInternalServerError()
 	}
 
 	if err := s.redisClient.Set(ctx, "refresh:"+refreshToken, "active", time.Duration(config.AppConfig.REFRESH_EXPIRATION)*time.Second).Err(); err != nil {
-		return nil, errors.NewInternalServerError("internal server error")
+		return nil, errors.NewInternalServerError()
 	}
 
 	expiresIn := time.Now().Add(time.Duration(config.AppConfig.ACCESS_EXPIRATION) * time.Second).Unix()

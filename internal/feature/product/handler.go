@@ -3,6 +3,7 @@ package product
 import (
 	"inverntory_management/internal/exception"
 	"inverntory_management/internal/types"
+	custom "inverntory_management/pkg/errors"
 	"net/http"
 	"strconv"
 
@@ -59,15 +60,16 @@ func (h *ProductHandler) GetProduct(c echo.Context) error {
 func (h *ProductHandler) CreateProduct(c echo.Context) error {
 	dto := new(ProductCreateDto)
 	if err := c.Bind(dto); err != nil {
-		return exception.HandleError(c, err)
+		return custom.NewBadRequestError(err.Error())
+
 	}
 
 	if err := c.Validate(dto); err != nil {
-		return exception.HandleError(c, err)
+		return custom.NewBadRequestError(err.Error())
 	}
 
 	if err := h.productService.Create(*dto); err != nil {
-		return exception.HandleError(c, err)
+		return err
 	}
 
 	return c.JSON(http.StatusCreated, types.Response{

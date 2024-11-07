@@ -5,6 +5,7 @@ import (
 	"inverntory_management/internal/database"
 	"inverntory_management/internal/feature/auth"
 	"inverntory_management/internal/feature/branch"
+	"inverntory_management/internal/feature/category"
 	files "inverntory_management/internal/feature/file"
 	"inverntory_management/internal/feature/inventory"
 	"inverntory_management/internal/feature/inventory_transfer"
@@ -48,6 +49,7 @@ func Initialize() (*echo.Echo, error) {
 	transferRepo := inventory_transfer.NewInventoryTransferRepository(database.DB)
 	reportRepo := report.NewReportRepository(database.DB)
 	productRepo := product.NewProductRepository(database.DB)
+	categoryRepo := category.NewCategoryRepository(database.DB)
 
 	// Initialize Services
 	authService := auth.NewAuthService(userRepo, redisClient)
@@ -59,6 +61,8 @@ func Initialize() (*echo.Echo, error) {
 	transferService := inventory_transfer.NewInventoryService(transferRepo, userRepo)
 	reportService := report.NewReportService(reportRepo, userRepo)
 	productService := product.NewProductService(productRepo)
+	categoryService := category.NewCategoryService(categoryRepo)
+	fileService := files.NewFileService()
 
 	// Initialize Routes
 	auth.InitAuthRoutes(e, authService)
@@ -70,7 +74,8 @@ func Initialize() (*echo.Echo, error) {
 	inventory_transfer.InitInventoryTransferRoutes(e, transferService)
 	report.InitReportRoutes(e, reportService)
 	product.InitProductRoutes(e, productService)
-	files.InitFileRoutes(e)
+	category.InitCategoryRoutes(e, categoryService)
+	files.InitFileRoutes(e, fileService)
 
 	return e, nil
 }

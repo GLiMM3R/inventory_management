@@ -13,7 +13,7 @@ func ErrorHandler(next echo.HandlerFunc) echo.HandlerFunc {
 		if err := next(c); err != nil {
 			var appErr *custom.AppError
 			if !errors.As(err, &appErr) {
-				appErr = custom.NewInternalServerError("Internal Server Error")
+				appErr = custom.NewInternalServerError()
 			}
 			return c.JSON(appErr.Code, appErr)
 		}

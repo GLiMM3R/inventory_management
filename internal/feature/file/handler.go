@@ -2,21 +2,18 @@ package files
 
 import (
 	"inverntory_management/internal/types"
-	"io"
+	custom "inverntory_management/pkg/errors"
 	"net/http"
-	"os"
-	"path/filepath"
 
-	"github.com/google/uuid"
 	"github.com/labstack/echo"
 )
 
 type FileHandler struct {
-	// service FileServiceImpl
+	service FileServiceImpl
 }
 
-func NewFileHandler() FileHandler {
-	return FileHandler{}
+func NewFileHandler(service FileServiceImpl) FileHandler {
+	return FileHandler{service: service}
 }
 
 func (h *FileHandler) UploadFile(c echo.Context) error {
@@ -24,42 +21,12 @@ func (h *FileHandler) UploadFile(c echo.Context) error {
 
 	file, err := c.FormFile("file")
 	if err != nil {
-		return c.JSON(http.StatusInternalServerError, types.Response{
-			Data:     nil,
-			Status:   http.StatusNotFound,
-			Messages: err.Error(),
-		})
+		return custom.NewBadRequestError(err.Error())
 	}
 
-	src, err := file.Open()
+	fileName, err := h.service.UploadFile(fileType, file)
 	if err != nil {
-		return c.JSON(http.StatusInternalServerError, types.Response{
-			Data:     nil,
-			Status:   http.StatusNotFound,
-			Messages: err.Error(),
-		})
-	}
-	defer src.Close()
-
-	fileName := uuid.NewString() + filepath.Ext(file.Filename)
-
-	dstPath := filepath.Join("uploads", fileType, fileName)
-	dst, err := os.Create(dstPath)
-	if err != nil {
-		return c.JSON(http.StatusInternalServerError, types.Response{
-			Data:     nil,
-			Status:   http.StatusNotFound,
-			Messages: err.Error(),
-		})
-	}
-	defer dst.Close()
-
-	if _, err = io.Copy(dst, src); err != nil {
-		return c.JSON(http.StatusInternalServerError, types.Response{
-			Data:     nil,
-			Status:   http.StatusNotFound,
-			Messages: err.Error(),
-		})
+		return err
 	}
 
 	return c.JSON(http.StatusOK, types.Response{
@@ -67,4 +34,16 @@ func (h *FileHandler) UploadFile(c echo.Context) error {
 		Status:   http.StatusOK,
 		Messages: "Success",
 	})
+}
+
+func (h *FileHandler) GetFile(c echo.Context) error {
+	directory := c.Param("directory")
+	fileName := c.Param("name")
+	file, err := h.service.ReadFile(directory, fileName)
+	if err != nil {
+		return err
+	}
+
+	// Assuming the file is a path to the image file on the server
+	return c.Blob(http.StatusOK, "image/jpeg", file)
 }

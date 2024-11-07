@@ -26,8 +26,8 @@ func NewNotFoundError(message string) *AppError {
 	return NewAppError(http.StatusNotFound, message)
 }
 
-func NewInternalServerError(message string) *AppError {
-	return NewAppError(http.StatusInternalServerError, message)
+func NewInternalServerError() *AppError {
+	return NewAppError(http.StatusInternalServerError, "Internal server error")
 }
 
 func NewBadRequestError(message string) *AppError {
@@ -41,4 +41,8 @@ func NewDatabaseError(message string) *AppError {
 
 func NewDataNotFoundError(message string) *AppError {
 	return NewAppError(http.StatusNotFound, message)
+}
+
+func NewConflictError(message string) *AppError {
+	return NewAppError(http.StatusConflict, message)
 }

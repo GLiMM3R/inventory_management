@@ -25,7 +25,7 @@ func (h *AuthHandler) Login(c echo.Context) error {
 	}
 
 	if err := c.Validate(request); err != nil {
-		return errors.NewInternalServerError(err.Error())
+		return errors.NewInternalServerError()
 	}
 
 	response, err := h.service.Login(request)
