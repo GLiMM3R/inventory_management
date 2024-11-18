@@ -1,6 +1,10 @@
 package category
 
-import "inverntory_management/internal/database/schema"
+import (
+	"inverntory_management/internal/database/schema"
+
+	"github.com/google/uuid"
+)
 
 type CategoryServiceImpl interface {
 	GetAll(page, limit int, parent_id string) ([]schema.Category, int64, error)
@@ -19,6 +23,7 @@ func NewCategoryService(repo CategoryRepositoryImpl) CategoryServiceImpl {
 func (s *categoryService) Create(category CategoryRequest) error {
 	var newCategory schema.Category
 
+	newCategory.CategoryID = uuid.NewString()
 	newCategory.Name = category.Name
 
 	if category.ParentCategoryID != nil {

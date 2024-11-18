@@ -6,6 +6,7 @@ type Category struct {
 	ParentCategoryID *string   `json:"parent_category_id" gorm:"column:parent_category_id;null"`
 	Category         *Category `json:"-" gorm:"foreignKey:parent_category_id;references:category_id"`
 	Name             string    `json:"name" gorm:"column:name"`
+	Image            *string   `json:"image" gorm:"column:image"`
 	CreatedAt        int64     `json:"created_at" gorm:"autoCreateTime;column:created_at"`
 	UpdatedAt        int64     `json:"updated_at" gorm:"autoUpdateTime;column:updated_at"`
 
