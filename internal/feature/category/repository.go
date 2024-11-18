@@ -9,7 +9,7 @@ import (
 )
 
 type CategoryRepositoryImpl interface {
-	FindAll(page int, limit int) ([]schema.Category, int64, error)
+	FindAll(page int, limit int, parent_id string) ([]schema.Category, int64, error)
 	Create(category *schema.Category) error
 }
 
@@ -33,12 +33,16 @@ func (r *categoryRepository) Create(category *schema.Category) error {
 }
 
 // FindAll implements CategoryRepositoryImpl.
-func (r *categoryRepository) FindAll(page int, limit int) ([]schema.Category, int64, error) {
+func (r *categoryRepository) FindAll(page int, limit int, parent_id string) ([]schema.Category, int64, error) {
 	var data []schema.Category
 	var total int64
 	offset := (page - 1) * limit
 
 	query := r.db.Model(&schema.Category{})
+
+	if parent_id != "" {
+		query = query.Where("parent_category_id = ?", parent_id)
+	}
 
 	if err := query.Count(&total).Limit(limit).Offset(offset).Find(&data).Error; err != nil {
 		return nil, 0, err

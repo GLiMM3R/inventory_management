@@ -14,7 +14,7 @@ type ProductServiceImpl interface {
 	FindAll(page, limit int) ([]ProductResponse, int64, error)
 	FindByID(product_id string) (*schema.Product, error)
 	Create(product ProductCreateDto) error
-	Update(product schema.Product) error
+	Update(product_id string, product ProductUpdateDto) error
 
 	//variant
 	AddVariant(product_id string, variant VariantCreateDto) error
@@ -65,8 +65,50 @@ func (s *productService) FindByID(product_id string) (*schema.Product, error) {
 }
 
 // Update implements ProductServiceImpl.
-func (s *productService) Update(product schema.Product) error {
-	panic("unimplemented")
+func (s *productService) Update(product_id string, request ProductUpdateDto) error {
+	product := new(schema.Product)
+
+	product.ProductID = product_id
+
+	if request.CategoryID != nil {
+		product.CategoryID = *request.CategoryID
+	}
+
+	if request.Name != nil {
+		product.Name = *request.Name
+	}
+
+	if request.Description != nil {
+		product.Description = *request.Description
+	}
+
+	if request.Images != nil {
+		product.Images = *request.Images
+	}
+
+	if request.Variants != nil {
+		for _, variant := range *request.Variants {
+			if variant.Price != nil {
+				newPrice := schema.PriceHistory{
+					PriceID:       uuid.NewString(),
+					NewPrice:      *variant.Price,
+					OldPrice:      0,
+					EffectiveDate: time.Now().Unix(),
+				}
+
+				product.Variants = append(product.Variants, schema.Variant{
+					Price: []schema.PriceHistory{newPrice},
+				})
+			}
+		}
+	}
+
+	err := s.productRepo.Update(product)
+	if err != nil {
+		return err
+	}
+
+	return nil
 }
 
 // Create implements ProductRepositoryImpl.

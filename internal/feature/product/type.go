@@ -18,6 +18,26 @@ type AttributeCreateDto struct {
 	Value     string `json:"value"`
 }
 
+type ProductUpdateDto struct {
+	Name        *string             `json:"name,omitempty" validate:"omitempty"`
+	CategoryID  *string             `json:"category_id,omitempty" validate:"omitempty"`
+	Description *string             `json:"description,omitempty" validate:"omitempty"`
+	Images      *[]string           `json:"images,omitempty" validate:"omitempty"`
+	Variants    *[]VariantUpdateDto `json:"variants,omitempty" validate:"omitempty"`
+}
+
+type VariantUpdateDto struct {
+	VariantID  *string               `json:"variant_id,omitempty" validate:"omitempty"`
+	Price      *float64              `json:"price,omitempty" validate:"omitempty"`
+	Attributes *[]AttributeUpdateDto `json:"attributes,omitempty" validate:"omitempty"`
+}
+
+type AttributeUpdateDto struct {
+	AttributeID *string `json:"attribute_id,omitempty" validate:"omitempty"`
+	Attribute   *string `json:"attribute,omitempty" validate:"omitempty"`
+	Value       *string `json:"value,omitempty" validate:"omitempty"`
+}
+
 type ProductResponse struct {
 	ProductID   string            `json:"product_id"`
 	Name        string            `json:"name"`

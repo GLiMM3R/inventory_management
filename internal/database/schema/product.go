@@ -12,7 +12,7 @@ type Product struct {
 	Images      Images         `json:"images" gorm:"column:images;serializer:json"`
 	Name        string         `json:"name" gorm:"column:name"`
 	CategoryID  string         `json:"category_id" gorm:"column:fk_category_id"`
-	Category    Category       `json:"-" gorm:"foreignKey:fk_category_id;references:category_id"`
+	Category    Category       `json:"category" gorm:"foreignKey:fk_category_id;references:category_id"`
 	Description string         `json:"description" gorm:"column:description;null"`
 	CreatedAt   int64          `json:"created_at" gorm:"autoCreateTime;column:created_at"`
 	UpdatedAt   int64          `json:"updated_at" gorm:"autoUpdateTime;column:updated_at"`

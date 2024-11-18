@@ -15,6 +15,30 @@ type FileHandler struct {
 func NewFileHandler(service FileServiceImpl) FileHandler {
 	return FileHandler{service: service}
 }
+func (h *FileHandler) UploadMultiFiles(c echo.Context) error {
+	fileType := c.QueryParam("type")
+
+	form, err := c.MultipartForm()
+	if err != nil {
+		return custom.NewBadRequestError(err.Error())
+	}
+
+	files := form.File["files"]
+	if len(files) == 0 {
+		return custom.NewBadRequestError("No files provided")
+	}
+
+	fileNames, err := h.service.UploadMultiFiles(fileType, files)
+	if err != nil {
+		return err
+	}
+
+	return c.JSON(http.StatusOK, types.Response{
+		Data:     fileNames,
+		Status:   http.StatusOK,
+		Messages: "Success",
+	})
+}
 
 func (h *FileHandler) UploadFile(c echo.Context) error {
 	fileType := c.QueryParam("type")

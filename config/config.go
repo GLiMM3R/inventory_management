@@ -47,10 +47,10 @@ func init() {
 	AppConfig.PUBLIC_KEY = publicBytes
 }
 
-func LoadConfig(path string) {
+func LoadConfig(path, file string) {
 	viper.AddConfigPath(path)
-	viper.SetConfigName("config")
-	viper.SetConfigFile(".env")
+	viper.SetConfigName(file)
+	viper.SetConfigType("env")
 
 	viper.AutomaticEnv()
 

@@ -79,6 +79,29 @@ func (h *ProductHandler) CreateProduct(c echo.Context) error {
 	})
 }
 
+func (h *ProductHandler) UpdateProduct(c echo.Context) error {
+	product_id := c.Param("id")
+	dto := new(ProductUpdateDto)
+	if err := c.Bind(dto); err != nil {
+		return custom.NewBadRequestError(err.Error())
+
+	}
+
+	if err := c.Validate(dto); err != nil {
+		return custom.NewBadRequestError(err.Error())
+	}
+
+	if err := h.productService.Update(product_id, *dto); err != nil {
+		return err
+	}
+
+	return c.JSON(http.StatusCreated, types.Response{
+		Data:     true,
+		Status:   http.StatusCreated,
+		Messages: "Success",
+	})
+}
+
 func (h *ProductHandler) AddVariant(c echo.Context) error {
 	id := c.Param("id")
 

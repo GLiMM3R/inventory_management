@@ -67,7 +67,7 @@ func (r *productRepository) FindAll(page int, limit int) ([]schema.Product, int6
 func (r *productRepository) FindById(product_id string) (*schema.Product, error) {
 	var product *schema.Product
 
-	if err := r.db.Preload("Variants").Preload("Variants.Attributes").Preload("Variants.Price").Preload(clause.Associations).First(&product, "product_id = ?", product_id).Error; err != nil {
+	if err := r.db.Preload("Category").Preload("Variants").Preload("Variants.Attributes").Preload("Variants.Price").Preload(clause.Associations).First(&product, "product_id = ?", product_id).Error; err != nil {
 		if errors.Is(err, gorm.ErrRecordNotFound) {
 			return nil, exception.ErrNotFound
 		}
@@ -78,7 +78,7 @@ func (r *productRepository) FindById(product_id string) (*schema.Product, error)
 
 // Update implements ProductRepositoryImpl.
 func (r *productRepository) Update(product *schema.Product) error {
-	if err := r.db.Save(&product).Error; err != nil {
+	if err := r.db.Model(&product).Select("*").Updates(product).Error; err != nil {
 		if errors.Is(err, gorm.ErrDuplicatedKey) {
 			return exception.ErrDuplicateEntry
 		}

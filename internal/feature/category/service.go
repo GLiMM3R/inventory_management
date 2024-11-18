@@ -3,7 +3,7 @@ package category
 import "inverntory_management/internal/database/schema"
 
 type CategoryServiceImpl interface {
-	GetAll(page, limit int) ([]schema.Category, int64, error)
+	GetAll(page, limit int, parent_id string) ([]schema.Category, int64, error)
 	Create(category CategoryRequest) error
 }
 
@@ -34,8 +34,8 @@ func (s *categoryService) Create(category CategoryRequest) error {
 }
 
 // FindAll implements CategoryRepositoryImpl.
-func (s *categoryService) GetAll(page int, limit int) ([]schema.Category, int64, error) {
-	categories, total, err := s.repo.FindAll(page, limit)
+func (s *categoryService) GetAll(page int, limit int, parent_id string) ([]schema.Category, int64, error) {
+	categories, total, err := s.repo.FindAll(page, limit, parent_id)
 	if err != nil {
 		return nil, 0, err
 	}

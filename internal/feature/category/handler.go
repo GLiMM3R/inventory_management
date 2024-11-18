@@ -28,7 +28,9 @@ func (h *CategoryHandler) GetCategories(c echo.Context) error {
 		limit = 10
 	}
 
-	categories, total, err := h.categoryService.GetAll(page, limit)
+	parent_id := c.QueryParam("parent_id")
+
+	categories, total, err := h.categoryService.GetAll(page, limit, parent_id)
 	if err != nil {
 		return err
 	}
