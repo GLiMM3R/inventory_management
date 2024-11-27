@@ -1,6 +1,8 @@
 package product
 
-import "inverntory_management/internal/feature/media"
+import (
+	"inverntory_management/internal/feature/media"
+)
 
 type ProductCreateDto struct {
 	Name        string                     `json:"name" validate:"required"`
@@ -52,10 +54,17 @@ type ProductListResponse struct {
 }
 
 type VariantResponse struct {
-	VariantID  string              `json:"variant_id"`
-	SKU        string              `json:"sku"`
-	Price      float64             `json:"price"`
-	Attributes []AttributeResponse `json:"attributes"`
+	VariantID    string              `json:"variant_id"`
+	SKU          string              `json:"sku"`
+	Price        float64             `json:"price"`
+	Quantity     int                 `json:"quantity"`
+	RestockLevel int                 `json:"restock_level"`
+	IsActive     bool                `json:"is_active"`
+	Status       string              `json:"status"`
+	CreatedAt    int64               `json:"created_at"`
+	UpdatedAt    int64               `json:"updated_at"`
+	Image        media.MediaResponse `json:"image"`
+	Attributes   []AttributeResponse `json:"attributes"`
 }
 
 type AttributeResponse struct {

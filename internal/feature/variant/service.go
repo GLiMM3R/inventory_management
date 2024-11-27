@@ -2,6 +2,8 @@ package variant
 
 import (
 	"context"
+	"encoding/json"
+	"fmt"
 	"inverntory_management/config"
 	"inverntory_management/internal/database/schema"
 	"inverntory_management/internal/feature/product"
@@ -16,8 +18,8 @@ import (
 type VariantService interface {
 	//variant
 	FindByID(variant_id string) (*schema.Variant, error)
-	Create(variant_id string, variant VariantCreateDto) error
-	Update(variant_id string, variant VariantUpdateDto) error
+	Create(variant_id string, variant CreateVariantDto) error
+	Update(variant_id string, variant UpdateVariantDto) error
 	Delete(variant_id string) error
 }
 
@@ -42,7 +44,7 @@ func (s *variantService) FindByID(variant_id string) (*schema.Variant, error) {
 }
 
 // AddVariant implements ProductServiceImpl.
-func (s *variantService) Create(product_id string, req VariantCreateDto) error {
+func (s *variantService) Create(product_id string, req CreateVariantDto) error {
 	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
 	defer cancel()
 
@@ -104,7 +106,7 @@ func (s *variantService) Create(product_id string, req VariantCreateDto) error {
 }
 
 // UpdateVariant implements ProductServiceImpl.
-func (s *variantService) Update(variant_id string, req VariantUpdateDto) error {
+func (s *variantService) Update(variant_id string, req UpdateVariantDto) error {
 	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
 	defer cancel()
 
@@ -146,6 +148,7 @@ func (s *variantService) Update(variant_id string, req VariantUpdateDto) error {
 	}
 
 	if req.Image != nil {
+		fmt.Println("here=>")
 		if vairant.Image != nil {
 			if err := s.s3Client.DeleteObjects(ctx, config.AppConfig.AWS_BUCKET_NAME, []string{vairant.Image.FilePath}); err != nil {
 				return err_response.NewInternalServerError()
@@ -173,7 +176,14 @@ func (s *variantService) Update(variant_id string, req VariantUpdateDto) error {
 			MediaType:   req.Image.MediaType,
 			Description: req.Image.Description,
 		}
+		vairant.ImageID = &newMediaID
 	}
+
+	productJSON, err := json.MarshalIndent(vairant, "", "  ")
+	if err != nil {
+		return err
+	}
+	fmt.Println(string(productJSON))
 
 	if err := s.vairantRepo.Update(vairant); err != nil {
 		return err

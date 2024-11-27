@@ -10,6 +10,7 @@ import (
 	"inverntory_management/internal/feature/report"
 	"inverntory_management/internal/feature/sale"
 	"inverntory_management/internal/feature/user"
+	"inverntory_management/internal/feature/variant"
 	aws_service "inverntory_management/pkg/aws"
 
 	"github.com/labstack/echo"
@@ -23,6 +24,7 @@ type AppRepositories struct {
 	ProductRepo  product.ProductRepositoryImpl
 	CategoryRepo category.CategoryRepositoryImpl
 	MediaRepo    media.MediaRepository
+	VariantRepo  variant.VariantRepository
 	RedisClient  redis.Client
 }
 
@@ -33,6 +35,7 @@ type AppServices struct {
 	ReportService   report.ReportServiceImpl
 	ProductService  product.ProductServiceImpl
 	CategoryService category.CategoryServiceImpl
+	VariantService  variant.VariantService
 	FileService     files.FileServiceImpl
 	MediaService    media.MediaService
 }
@@ -46,6 +49,7 @@ func initializeRepositories(redisClient *redis.Client) *AppRepositories {
 		ProductRepo:  product.NewProductRepository(database.DB),
 		CategoryRepo: category.NewCategoryRepository(database.DB),
 		MediaRepo:    media.NewMediaRepository(database.DB),
+		VariantRepo:  variant.NewVariantRepository(database.DB),
 		RedisClient:  *redisClient,
 	}
 }
@@ -60,6 +64,7 @@ func initializeServices(repo *AppRepositories, s3Client *aws_service.S3Client) *
 		ProductService:  product.NewProductService(repo.ProductRepo, repo.MediaRepo, *s3Client),
 		CategoryService: category.NewCategoryService(repo.CategoryRepo),
 		MediaService:    media.NewMediaService(repo.MediaRepo, *s3Client),
+		VariantService:  variant.NewProductService(repo.VariantRepo, repo.ProductRepo, *s3Client),
 		FileService:     files.NewFileService(*s3Client),
 	}
 }
@@ -72,5 +77,6 @@ func initializeRoutes(e *echo.Echo, service *AppServices) {
 	report.InitReportRoutes(e, service.ReportService)
 	product.InitProductRoutes(e, service.ProductService)
 	category.InitCategoryRoutes(e, service.CategoryService)
+	variant.InitVariantRoutes(e, service.VariantService)
 	files.InitFileRoutes(e, service.FileService)
 }

@@ -3,6 +3,7 @@ package variant
 import (
 	"inverntory_management/internal/exception"
 	"inverntory_management/internal/types"
+	err_response "inverntory_management/pkg/errors"
 	"net/http"
 
 	"github.com/labstack/echo"
@@ -19,7 +20,7 @@ func NewProductHandler(variantService VariantService) *VariantHandler {
 func (h *VariantHandler) AddVariant(c echo.Context) error {
 	product_id := c.Param("product_id")
 
-	dto := new(VariantCreateDto)
+	dto := new(CreateVariantDto)
 	if err := c.Bind(dto); err != nil {
 		return exception.HandleError(c, err)
 	}
@@ -42,13 +43,13 @@ func (h *VariantHandler) AddVariant(c echo.Context) error {
 func (h *VariantHandler) Update(c echo.Context) error {
 	id := c.Param("id")
 
-	dto := new(VariantUpdateDto)
+	dto := new(UpdateVariantDto)
 	if err := c.Bind(dto); err != nil {
-		return exception.HandleError(c, err)
+		return err_response.NewBadRequestError(err.Error())
 	}
 
 	if err := c.Validate(dto); err != nil {
-		return exception.HandleError(c, err)
+		return err_response.NewBadRequestError(err.Error())
 	}
 
 	if err := h.variantService.Update(id, *dto); err != nil {

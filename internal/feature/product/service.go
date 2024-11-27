@@ -116,9 +116,36 @@ func (s *productService) FindByID(product_id string) (*ProductResponse, error) {
 	}
 	for j, variant := range product.Variants {
 		response.Variants[j] = VariantResponse{
-			VariantID:  variant.VariantID,
-			SKU:        variant.SKU,
-			Attributes: make([]AttributeResponse, len(variant.Attributes)),
+			VariantID:    variant.VariantID,
+			SKU:          variant.SKU,
+			Price:        variant.Price,
+			Quantity:     variant.Quantity,
+			RestockLevel: variant.RestockLevel,
+			IsActive:     variant.IsActive,
+			Status:       variant.Status,
+			CreatedAt:    variant.CreatedAt,
+			UpdatedAt:    variant.UpdatedAt,
+			Attributes:   make([]AttributeResponse, len(variant.Attributes)),
+		}
+
+		if variant.Image != nil {
+			result, err := s.s3Client.GetObject(ctx, config.AppConfig.AWS_BUCKET_NAME, variant.Image.FilePath, int64(3600))
+			if err != nil {
+				log.Println(err.Error())
+			}
+
+			response.Variants[j].Image = media.MediaResponse{
+				MediaID:     variant.Image.MediaID,
+				FileURL:     result.URL,
+				FileName:    variant.Image.FileName,
+				FilePath:    variant.Image.FilePath,
+				FileType:    variant.Image.FileType,
+				FileSize:    variant.Image.FileSize,
+				MediaType:   variant.Image.MediaType,
+				Description: variant.Image.Description,
+				CreatedAt:   variant.Image.CreatedAt,
+				UpdatedAt:   variant.Image.UpdatedAt,
+			}
 		}
 
 		for k, attribute := range variant.Attributes {
