@@ -101,30 +101,3 @@ func (h *ProductHandler) UpdateProduct(c echo.Context) error {
 		Messages: "Success",
 	})
 }
-
-func (h *ProductHandler) AddVariant(c echo.Context) error {
-	id := c.Param("id")
-
-	dto := new(VariantCreateDto)
-	if err := c.Bind(dto); err != nil {
-		return exception.HandleError(c, err)
-	}
-
-	if err := c.Validate(dto); err != nil {
-		return exception.HandleError(c, err)
-	}
-
-	if err := h.productService.AddVariant(id, *dto); err != nil {
-		return c.JSON(http.StatusInternalServerError, types.Response{
-			Data:     err.Error(),
-			Status:   http.StatusInternalServerError,
-			Messages: "Error",
-		})
-	}
-
-	return c.JSON(http.StatusCreated, types.Response{
-		Data:     true,
-		Status:   http.StatusCreated,
-		Messages: "Success",
-	})
-}

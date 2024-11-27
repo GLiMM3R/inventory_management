@@ -5,8 +5,6 @@ import "gorm.io/gorm"
 type User struct {
 	ID               uint           `json:"-" gorm:"primaryKey;autoIncrement:true;column:id"`
 	UserID           string         `json:"user_id" gorm:"primaryKey;unique;column:user_id"`
-	BranchID         string         `json:"branch_id" gorm:"column:fk_branch_id"`
-	Branch           Branch         `json:"-" gorm:"foreignKey:fk_branch_id;references:branch_id"`
 	Email            string         `json:"email" gorm:"unique;column:email"`
 	Username         string         `json:"username" gorm:"unique;column:username"`
 	Password         string         `json:"-" gorm:"column:password"`

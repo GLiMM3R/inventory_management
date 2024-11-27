@@ -15,6 +15,7 @@ type FileHandler struct {
 func NewFileHandler(service FileServiceImpl) FileHandler {
 	return FileHandler{service: service}
 }
+
 func (h *FileHandler) UploadMultiFiles(c echo.Context) error {
 	fileType := c.QueryParam("type")
 
@@ -70,4 +71,22 @@ func (h *FileHandler) GetFile(c echo.Context) error {
 
 	// Assuming the file is a path to the image file on the server
 	return c.Blob(http.StatusOK, "image/jpeg", file)
+}
+
+func (h *FileHandler) GeneratePresignPutObject(c echo.Context) error {
+	var request PutObjectRequest
+	if err := c.Bind(&request); err != nil {
+		return c.JSON(http.StatusBadRequest, map[string]string{"error": "Invalid request"})
+	}
+
+	res, err := h.service.GeneratePresignPutObject(request)
+	if err != nil {
+		return err
+	}
+
+	return c.JSON(http.StatusOK, types.Response{
+		Data:     res,
+		Status:   http.StatusOK,
+		Messages: "Success",
+	})
 }

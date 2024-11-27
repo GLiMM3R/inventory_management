@@ -46,3 +46,19 @@ func NewDataNotFoundError(message string) *AppError {
 func NewConflictError(message string) *AppError {
 	return NewAppError(http.StatusConflict, message)
 }
+
+func NewUnauthorizeError(message string) *AppError {
+	return NewAppError(http.StatusUnauthorized, message)
+}
+
+func NewForbiddenError(message string) *AppError {
+	return NewAppError(http.StatusForbidden, message)
+}
+
+func NewValidationError(message string) *AppError {
+	return NewAppError(http.StatusBadRequest, message)
+}
+
+func NewUnprocessableEntityError(message string) *AppError {
+	return NewAppError(http.StatusUnprocessableEntity, message)
+}

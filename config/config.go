@@ -9,23 +9,28 @@ import (
 )
 
 type Config struct {
-	APP_NAME           string `mapstructure:"APP_NAME"`
-	PORT               int    `mapstructure:"PORT"`
-	EMAIL              string `mapstructure:"EMAIL"`
-	EMAIL_PWD          string `mapstructure:"EMAIL_PWD"`
-	DATABASE_DRIVER    string `mapstructure:"DATABASE_DRIVER"`
-	DATABASE_URL       string `mapstructure:"DATABASE_URL"`
-	ACCESS_SECRET      string `mapstructure:"ACCESS_SECRET"`
-	ACCESS_EXPIRATION  int64  `mapstructure:"ACCESS_EXPIRATION"`
-	REFRESH_SECRET     string `mapstructure:"REFRESH_SECRET"`
-	REFRESH_EXPIRATION int64  `mapstructure:"REFRESH_EXPIRATION"`
-	RESET_SECRET       string `mapstructure:"DB_HOST"`
-	RESET_EXPIRATION   int64  `mapstructure:"RESET_EXPIRATION"`
-	REDIS_ADDR         string `mapstructure:"REDIS_ADDR"`
-	REDIS_PWD          string `mapstructure:"DB_HOST"`
-	REDIS_DB           int    `mapstructure:"REDIS_DB"`
-	PRIVATE_KEY        []byte
-	PUBLIC_KEY         []byte
+	APP_NAME              string `mapstructure:"APP_NAME"`
+	PORT                  int    `mapstructure:"PORT"`
+	EMAIL                 string `mapstructure:"EMAIL"`
+	EMAIL_PWD             string `mapstructure:"EMAIL_PWD"`
+	DATABASE_DRIVER       string `mapstructure:"DATABASE_DRIVER"`
+	DATABASE_URL          string `mapstructure:"DATABASE_URL"`
+	ACCESS_SECRET         string `mapstructure:"ACCESS_SECRET"`
+	ACCESS_EXPIRATION     int64  `mapstructure:"ACCESS_EXPIRATION"`
+	REFRESH_SECRET        string `mapstructure:"REFRESH_SECRET"`
+	REFRESH_EXPIRATION    int64  `mapstructure:"REFRESH_EXPIRATION"`
+	RESET_SECRET          string `mapstructure:"DB_HOST"`
+	RESET_EXPIRATION      int64  `mapstructure:"RESET_EXPIRATION"`
+	REDIS_ADDR            string `mapstructure:"REDIS_ADDR"`
+	REDIS_PWD             string `mapstructure:"DB_HOST"`
+	REDIS_DB              int    `mapstructure:"REDIS_DB"`
+	AWS_ACCESS_KEY_ID     string `mapstructure:"AWS_ACCESS_KEY_ID"`
+	AWS_SECRET_ACCESS_KEY string `mapstructure:"AWS_SECRET_ACCESS_KEY"`
+	AWS_BUCKET_NAME       string `mapstructure:"AWS_BUCKET_NAME"`
+	AWS_BUCKET_REGION     string `mapstructure:"AWS_BUCKET_REGION"`
+	AWS_ENDPOINT          string `mapstructure:"AWS_ENDPOINT"`
+	PRIVATE_KEY           []byte
+	PUBLIC_KEY            []byte
 }
 
 var AppConfig Config

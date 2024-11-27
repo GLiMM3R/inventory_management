@@ -3,8 +3,8 @@ package product
 import (
 	"errors"
 	"inverntory_management/internal/database/schema"
-	"inverntory_management/internal/exception"
-	custom "inverntory_management/pkg/errors"
+	err_response "inverntory_management/pkg/errors"
+	"log"
 
 	"gorm.io/gorm"
 	"gorm.io/gorm/clause"
@@ -17,11 +17,6 @@ type ProductRepositoryImpl interface {
 	Delete(product_id string) error
 	FindById(product_id string) (*schema.Product, error)
 	FindAll(page int, limit int) ([]schema.Product, int64, error)
-
-	//variant
-	CreateVariant(variant *schema.Variant) error
-	UpdateVariant(variant *schema.Variant) error
-	DeleteVariant(product_id string) error
 }
 
 type productRepository struct {
@@ -34,13 +29,15 @@ func NewProductRepository(db *gorm.DB) ProductRepositoryImpl {
 
 // Create implements ProductRepositoryImpl.
 func (r *productRepository) Create(product *schema.Product) error {
-	if err := r.db.Create(&product).Error; err != nil {
-		if errors.Is(err, gorm.ErrDuplicatedKey) {
-			return custom.NewConflictError("Duplicate key")
+	return r.db.Transaction(func(tx *gorm.DB) error {
+		if err := tx.Create(&product).Error; err != nil {
+			if errors.Is(err, gorm.ErrDuplicatedKey) {
+				return err_response.NewConflictError("Duplicate key")
+			}
+			return err_response.NewInternalServerError()
 		}
-		return custom.NewInternalServerError()
-	}
-	return nil
+		return nil
+	})
 }
 
 // Delete implements ProductRepositoryImpl.
@@ -67,49 +64,27 @@ func (r *productRepository) FindAll(page int, limit int) ([]schema.Product, int6
 func (r *productRepository) FindById(product_id string) (*schema.Product, error) {
 	var product *schema.Product
 
-	if err := r.db.Preload("Category").Preload("Variants").Preload("Variants.Attributes").Preload("Variants.Price").Preload(clause.Associations).First(&product, "product_id = ?", product_id).Error; err != nil {
+	if err := r.db.Preload("Category").Preload("Variants").Preload("Variants.Attributes").Preload("Images").Preload("Images.Media").Preload(clause.Associations).First(&product, "product_id = ?", product_id).Error; err != nil {
 		if errors.Is(err, gorm.ErrRecordNotFound) {
-			return nil, exception.ErrNotFound
+			log.Printf("%s", err.Error())
+			return nil, err_response.NewNotFoundError("Product not found!")
 		}
-		return nil, exception.ErrInternal
+		log.Printf("%s", err.Error())
+		return nil, err_response.NewInternalServerError()
 	}
 	return product, nil
 }
 
 // Update implements ProductRepositoryImpl.
 func (r *productRepository) Update(product *schema.Product) error {
-	if err := r.db.Model(&product).Select("*").Updates(product).Error; err != nil {
+	// if err := r.db.Model(&product).Select("name", "category_id", "description").Updates(product).Error; err != nil {
+	if err := r.db.Model(&product).Updates(&product).Error; err != nil {
 		if errors.Is(err, gorm.ErrDuplicatedKey) {
-			return exception.ErrDuplicateEntry
+			log.Printf("%s", err.Error())
+			return err_response.NewConflictError("Duplicate key")
 		}
-		return exception.ErrInternal
-	}
-	return nil
-}
-
-// CreateVariant implements ProductRepositoryImpl.
-func (r *productRepository) CreateVariant(variant *schema.Variant) error {
-	if err := r.db.Create(&variant).Error; err != nil {
-		if errors.Is(err, gorm.ErrDuplicatedKey) {
-			return exception.ErrDuplicateEntry
-		}
-		return err
-	}
-	return nil
-}
-
-// DeleteVariant implements ProductRepositoryImpl.
-func (r *productRepository) DeleteVariant(product_id string) error {
-	panic("unimplemented")
-}
-
-// UpdateVariant implements ProductRepositoryImpl.
-func (r *productRepository) UpdateVariant(variant *schema.Variant) error {
-	if err := r.db.Save(&variant).Error; err != nil {
-		if errors.Is(err, gorm.ErrDuplicatedKey) {
-			return exception.ErrDuplicateEntry
-		}
-		return exception.ErrInternal
+		log.Printf("%s", err.Error())
+		return err_response.NewInternalServerError()
 	}
 	return nil
 }

@@ -1,8 +1,6 @@
 package report
 
 import (
-	"inverntory_management/internal/exception"
-	"inverntory_management/internal/middleware"
 	"inverntory_management/internal/types"
 	"net/http"
 	"strconv"
@@ -21,11 +19,6 @@ func NewSaleHandler(service ReportServiceImpl) *ReportHandler {
 
 func (handler *ReportHandler) GetSalesReport(c echo.Context) error {
 	var err error
-
-	userClaims, err := middleware.ExtractUser(c)
-	if err != nil {
-		return exception.HandleError(c, err)
-	}
 
 	page, err := strconv.Atoi(c.QueryParam("page"))
 	if err != nil || page <= 0 {
@@ -63,7 +56,7 @@ func (handler *ReportHandler) GetSalesReport(c echo.Context) error {
 	}
 	endDateUnix := endDate.Unix()
 
-	response, total, err := handler.service.SalesReport(userClaims.Subject, startDateUnix, endDateUnix, page, limit)
+	response, total, err := handler.service.SalesReport(startDateUnix, endDateUnix, page, limit)
 	if err != nil {
 		return c.JSON(http.StatusInternalServerError, map[string]string{"error": "Failed to get sales report"})
 	}

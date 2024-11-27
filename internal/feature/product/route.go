@@ -12,5 +12,4 @@ func InitProductRoutes(e *echo.Echo, service ProductServiceImpl) {
 	// r.Use(middleware.JWTAccessMiddleware)
 	r.GET("/:id", h.GetProduct)
 	r.POST("", h.CreateProduct)
-	r.POST("/:id/variants", h.AddVariant)
 }
