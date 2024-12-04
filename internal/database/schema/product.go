@@ -17,16 +17,16 @@ type Product struct {
 	UpdatedAt   int64            `json:"updated_at" gorm:"autoUpdateTime;column:updated_at"`
 	DeletedAt   gorm.DeletedAt   `json:"deleted_at" gorm:"index;column:deleted_at"`
 	Category    Category         `json:"category" gorm:"foreignKey:fk_category_id;references:category_id"`
-	Variants    []ProductVariant `json:"variants" gorm:"foreignKey:fk_product_id;references:product_id"`
-	Thumbnail   *Media           `json:"thumbnail" gorm:"foreignKey:thumbnail_id;references:id;"`
+	Variants    []ProductVariant `json:"variants" gorm:"foreignKey:product_id;references:product_id"`
+	Thumbnail   *Media           `json:"thumbnail" gorm:"foreignKey:thumbnail_id;references:id"`
 }
 
 type ProductVariant struct {
 	ID              uint           `json:"-" gorm:"primaryKey;autoIncrement:true;column:id"`
 	VariantID       string         `json:"variant_id" gorm:"primaryKey;unique;column:variant_id"`
-	ProductID       string         `json:"product_id" gorm:"column:fk_product_id;"`
-	SKU             string         `json:"sku" gorm:"unique;column:sku;"`
-	VariantName     string         `json:"variant_name" gorm:"unique;column:variant_name;"`
+	ProductID       string         `json:"product_id" gorm:"column:product_id"`
+	SKU             string         `json:"sku" gorm:"unique;column:sku"`
+	VariantName     string         `json:"variant_name" gorm:"unique;column:variant_name"`
 	AdditionalPrice float64        `json:"additional_price" gorm:"column:additional_price;default:0"`
 	StockQuantity   int            `json:"stock_quantity" gorm:"column:stock_quantity;default:0"`
 	RestockLevel    int            `json:"restock_level" gorm:"column:restock_level;default:0"`
@@ -36,7 +36,7 @@ type ProductVariant struct {
 	UpdatedAt       int64          `json:"updated_at" gorm:"autoUpdateTime;column:updated_at"`
 	DeletedAt       gorm.DeletedAt `json:"deleted_at" gorm:"index;column:deleted_at"`
 	ImageID         *string        `json:"image_id" gorm:"column:image_id;uniqueIndex:idx_image_id"`
-	Image           *Media         `json:"image" gorm:"foreignKey:media_id;references:media_id"`
+	Image           *Media         `json:"image" gorm:"foreignKey:image_id;references:id"`
 	Attributes      []Attribute    `json:"attributes" gorm:"foreignKey:variant_id;references:variant_id"`
 }
 

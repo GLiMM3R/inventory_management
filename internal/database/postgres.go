@@ -51,6 +51,7 @@ func InitPostgres(cfg config.Config) *gorm.DB {
 		&schema.Sale{},
 		&schema.Media{},
 	); err != nil {
+		log.Println("err =>", err.Error())
 		panic("Failed to migrate database")
 	}
 

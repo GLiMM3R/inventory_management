@@ -25,6 +25,7 @@ func (s *categoryService) Create(category CategoryRequest) error {
 
 	newCategory.CategoryID = uuid.NewString()
 	newCategory.Name = category.Name
+	newCategory.Level = category.Level
 
 	if category.ParentCategoryID != nil {
 		newCategory.ParentCategoryID = category.ParentCategoryID

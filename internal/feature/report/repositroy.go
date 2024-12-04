@@ -25,8 +25,8 @@ func (r *reportRepository) SalesReport(startDate, endDate int64, page, limit int
 	query := r.db.Table("sales")
 
 	query = query.Select("sales.order_number as order_number, SUM(sales.total_price) as net_amount", "SUM(sales.quantity) as total_quantity", "sales.sale_date as sale_date").
-		Joins("left join inventories on inventories.inventory_id = sales.fk_inventory_id").
-		Where("inventories.fk_branch_id = ? AND sales.sale_date >= ? AND sales.sale_date <= ?", startDate, endDate).
+		Joins("left join inventories on inventories.inventory_id = sales.inventory_id").
+		Where("inventories.branch_id = ? AND sales.sale_date >= ? AND sales.sale_date <= ?", startDate, endDate).
 		Group("order_number, sale_date").
 		Count(&total).Limit(limit).Offset(offset).
 		Scan(&salesReports)
