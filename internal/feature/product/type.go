@@ -4,83 +4,81 @@ import (
 	"inverntory_management/internal/feature/media"
 )
 
-type ProductCreateDto struct {
-	Name        string                     `json:"name" validate:"required"`
-	CategoryID  string                     `json:"category_id" validate:"required"`
-	Description string                     `json:"description"`
-	Images      []media.CreateMediaRequest `json:"images,omitempty"`
-	Variants    []VariantCreateDto         `json:"variants"`
+type CreateProductDTO struct {
+	Name        string                `json:"name" validate:"required"`
+	BasePrice   float64               `json:"base_price" validate:"required,min=0"`
+	CategoryID  string                `json:"category_id" validate:"required"`
+	Description string                `json:"description"`
+	Thumbnail   *media.CreateMediaDTO `json:"thumbnail,omitempty"`
+	Variants    []CreateVariantDTO    `json:"variants"`
 }
 
-type VariantCreateDto struct {
-	Price      float64              `json:"price" validate:"required"`
-	Attributes []AttributeCreateDto `json:"attributes"`
+type CreateVariantDTO struct {
+	SKU             string                `json:"sku" validate:"required"`
+	VariantName     string                `json:"variant_name" validate:"required"`
+	AdditionalPrice float64               `json:"additional_price" validate:"min=0"`
+	StockQuantity   int                   `json:"stock_quantity" validate:"min=0"`
+	RestockLevel    int                   `json:"restock_level" validate:"min=0"`
+	Image           *media.CreateMediaDTO `json:"image,omitempty"`
+	Attributes      []CreateAttributeDTO  `json:"attributes"`
 }
 
-type AttributeCreateDto struct {
-	Attribute string `json:"attribute"`
-	Value     string `json:"value"`
+type CreateAttributeDTO struct {
+	AttributeName  string `json:"attribute_name" validate:"required"`
+	AttributeValue string `json:"attribute_value" validate:"required"`
 }
 
-type ProductUpdateDto struct {
-	Name        *string             `json:"name,omitempty" validate:"omitempty"`
-	CategoryID  *string             `json:"category_id,omitempty" validate:"omitempty"`
-	Description *string             `json:"description,omitempty" validate:"omitempty"`
-	Images      *[]string           `json:"images,omitempty" validate:"omitempty"`
-	Variants    *[]VariantUpdateDto `json:"variants,omitempty" validate:"omitempty"`
-}
-
-type VariantUpdateDto struct {
-	VariantID  *string               `json:"variant_id,omitempty" validate:"omitempty"`
-	Price      *float64              `json:"price,omitempty" validate:"omitempty"`
-	Attributes *[]AttributeUpdateDto `json:"attributes,omitempty" validate:"omitempty"`
-}
-
-type AttributeUpdateDto struct {
-	AttributeID *string `json:"attribute_id,omitempty" validate:"omitempty"`
-	Attribute   *string `json:"attribute,omitempty" validate:"omitempty"`
-	Value       *string `json:"value,omitempty" validate:"omitempty"`
+type UpdateProductDTO struct {
+	Name        *string               `json:"name" validate:"required"`
+	BasePrice   *float64              `json:"base_price" validate:"required,min=0"`
+	CategoryID  *string               `json:"category_id" validate:"required"`
+	Description *string               `json:"description"`
+	Thumbnail   *media.CreateMediaDTO `json:"thumbnail,omitempty"`
+	IsActive    *bool                 `json:"is_active,omitempty"`
 }
 
 type ProductListResponse struct {
-	ProductID   string                `json:"product_id"`
-	Name        string                `json:"name"`
-	Images      []media.MediaResponse `json:"images"`
-	Category    string                `json:"category"`
-	Description string                `json:"description"`
-	Variants    []VariantResponse     `json:"variants"`
-	CreatedAt   int64                 `json:"created_at"`
-	UpdatedAt   int64                 `json:"updated_at"`
+	ProductID    string  `json:"product_id"`
+	Name         string  `json:"name"`
+	BasePrice    float64 `json:"base_price"`
+	ThumbnailURL string  `json:"thumbnail_url"`
+	CategoryName string  `json:"category_name"`
+	Description  string  `json:"description"`
+	IsActive     bool    `json:"is_active"`
+	CreatedAt    int64   `json:"created_at"`
+	UpdatedAt    int64   `json:"updated_at"`
 }
 
 type VariantResponse struct {
-	VariantID    string              `json:"variant_id"`
-	SKU          string              `json:"sku"`
-	Price        float64             `json:"price"`
-	Quantity     int                 `json:"quantity"`
-	RestockLevel int                 `json:"restock_level"`
-	IsActive     bool                `json:"is_active"`
-	Status       string              `json:"status"`
-	CreatedAt    int64               `json:"created_at"`
-	UpdatedAt    int64               `json:"updated_at"`
-	Image        media.MediaResponse `json:"image"`
-	Attributes   []AttributeResponse `json:"attributes"`
+	VariantID       string              `json:"variant_id"`
+	SKU             string              `json:"sku"`
+	VariantName     string              `json:"variant_name"`
+	AdditionalPrice float64             `json:"additional_price"`
+	StockQuantity   int                 `json:"stock_quantity"`
+	RestockLevel    int                 `json:"restock_level"`
+	IsActive        bool                `json:"is_active"`
+	Status          string              `json:"status"`
+	CreatedAt       int64               `json:"created_at"`
+	UpdatedAt       int64               `json:"updated_at"`
+	ImageURL        string              `json:"image_url"`
+	Attributes      []AttributeResponse `json:"attributes"`
 }
 
 type AttributeResponse struct {
-	AttributeID string `json:"attribute_id"`
-	Attribute   string `json:"attribute"`
-	Value       string `json:"value"`
+	AttributeName  string `json:"attribute_name"`
+	AttributeValue string `json:"attribute_value"`
 }
 
 type ProductResponse struct {
-	ProductID   string                `json:"product_id"`
-	Name        string                `json:"name"`
-	Images      []media.MediaResponse `json:"images"`
-	CategoryID  string                `json:"category_id"`
-	Category    string                `json:"category"`
-	Description string                `json:"description"`
-	Variants    []VariantResponse     `json:"variants"`
-	CreatedAt   int64                 `json:"created_at"`
-	UpdatedAt   int64                 `json:"updated_at"`
+	ProductID    string            `json:"product_id"`
+	Name         string            `json:"name"`
+	BasePrice    float64           `json:"base_price"`
+	ThumbnailURL string            `json:"thumbnail_url"`
+	CategoryID   string            `json:"category_id"`
+	CategoryName string            `json:"category_name"`
+	Description  string            `json:"description"`
+	IsActive     bool              `json:"is_active"`
+	Variants     []VariantResponse `json:"variants"`
+	CreatedAt    int64             `json:"created_at"`
+	UpdatedAt    int64             `json:"updated_at"`
 }

@@ -3,6 +3,7 @@ package media
 import (
 	"inverntory_management/internal/database/schema"
 	aws_service "inverntory_management/pkg/aws"
+	"path/filepath"
 
 	"github.com/google/uuid"
 )
@@ -29,17 +30,17 @@ func NewMediaService(mediaRepository MediaRepository, s3client aws_service.S3Cli
 
 // Create implements MediaService.
 func (s *mediaService) Create(media *schema.Media) (*schema.Media, error) {
-	newId := uuid.NewString()
-	fileName := newId + "." + media.FileType
+	newMediaID := uuid.NewString()
+	ext := filepath.Ext(media.Name)
+	fileName := newMediaID + "." + ext
 
 	newMedia := &schema.Media{
-		MediaID:     newId,
-		FileName:    fileName,
-		FileType:    media.FileType,
-		FilePath:    media.FilePath,
-		FileSize:    media.FileSize,
-		MediaType:   media.MediaType,
-		Description: media.Description,
+		ID:             newMediaID,
+		Name:           fileName,
+		Type:           media.Type,
+		Size:           media.Size,
+		Path:           media.Path,
+		CollectionType: media.CollectionType,
 	}
 
 	err := s.mediaRepository.Create(newMedia)
@@ -82,12 +83,11 @@ func (s *mediaService) Update(id int, media *schema.Media) (*schema.Media, error
 		return nil, err
 	}
 
-	find.FileName = media.FileName
-	find.FileType = media.FileType
-	find.FilePath = media.FilePath
-	find.FileSize = media.FileSize
-	find.MediaType = media.MediaType
-	find.Description = media.Description
+	find.Name = media.Name
+	find.Type = media.Type
+	find.Size = media.Size
+	find.Path = media.Path
+	find.CollectionType = media.CollectionType
 
 	err = s.mediaRepository.Update(media)
 	if err != nil {

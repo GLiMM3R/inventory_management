@@ -15,6 +15,11 @@ func ErrorHandler(next echo.HandlerFunc) echo.HandlerFunc {
 			if !errors.As(err, &appErr) {
 				appErr = custom.NewInternalServerError()
 			}
+
+			if errors.Is(err, echo.ErrNotFound) {
+				appErr = custom.NewNotFoundError("404 Not found")
+			}
+
 			return c.JSON(appErr.Code, appErr)
 		}
 		return nil

@@ -7,7 +7,6 @@ import (
 	"inverntory_management/config"
 	"inverntory_management/internal/database/schema"
 	"inverntory_management/internal/feature/media"
-	"inverntory_management/internal/utils"
 	aws_service "inverntory_management/pkg/aws"
 	err_response "inverntory_management/pkg/errors"
 	"log"
@@ -21,18 +20,19 @@ type ProductServiceImpl interface {
 	//product
 	FindAll(page, limit int) ([]ProductListResponse, int64, error)
 	FindByID(product_id string) (*ProductResponse, error)
-	Create(product ProductCreateDto) error
-	Update(product_id string, product ProductUpdateDto) error
+	Create(product CreateProductDTO) error
+	Update(product_id string, product UpdateProductDTO) error
 }
 
 type productService struct {
 	productRepo ProductRepositoryImpl
 	mediaRepo   media.MediaRepository
 	s3Client    aws_service.S3Client
+	cfg         config.Config
 }
 
-func NewProductService(productRepo ProductRepositoryImpl, mediaRepo media.MediaRepository, s3Client aws_service.S3Client) ProductServiceImpl {
-	return &productService{productRepo: productRepo, mediaRepo: mediaRepo, s3Client: s3Client}
+func NewProductService(productRepo ProductRepositoryImpl, mediaRepo media.MediaRepository, s3Client aws_service.S3Client, cfg config.Config) ProductServiceImpl {
+	return &productService{productRepo: productRepo, mediaRepo: mediaRepo, s3Client: s3Client, cfg: cfg}
 }
 
 // FindAll implements ProductServiceImpl.
@@ -48,47 +48,33 @@ func (s *productService) FindAll(page int, limit int) ([]ProductListResponse, in
 	response := make([]ProductListResponse, len(products))
 
 	for i, product := range products {
-
 		response[i] = ProductListResponse{
-			ProductID:   product.ProductID,
-			Name:        product.Name,
-			Category:    product.Category.Name,
-			Description: product.Description,
-			Variants:    make([]VariantResponse, len(product.Variants)),
-			Images:      make([]media.MediaResponse, len(product.Images)),
-			CreatedAt:   product.CreatedAt,
-			UpdatedAt:   product.UpdatedAt,
+			ProductID:    product.ProductID,
+			Name:         product.Name,
+			CategoryName: product.Category.Name,
+			BasePrice:    product.BasePrice,
+			Description:  product.Description,
+			IsActive:     product.IsActive,
+			CreatedAt:    product.CreatedAt,
+			UpdatedAt:    product.UpdatedAt,
 		}
 
-		for j, variant := range product.Variants {
-			response[i].Variants[j] = VariantResponse{
-				VariantID: variant.VariantID,
-				SKU:       variant.SKU,
+		if product.ThumbnailID != nil {
+			result, err := s.s3Client.GetObject(ctx, s.cfg.AWS_BUCKET_NAME, product.Thumbnail.Path, int64(3600))
+			if err != nil {
+				log.Println(err)
+				continue
 			}
-		}
 
-		if len(product.Images) > 0 {
-			for j, image := range product.Images {
-				result, err := s.s3Client.GetObject(ctx, config.AppConfig.AWS_BUCKET_NAME, image.Media.FilePath, int64(3600))
-				if err != nil {
-					log.Println(err)
-				}
-
-				response[i].Images[j] = media.MediaResponse{
-					MediaID:     image.MediaID,
-					FileURL:     result.URL,
-					FileName:    image.Media.FileName,
-					FilePath:    image.Media.FilePath,
-					FileType:    image.Media.FileType,
-					FileSize:    image.Media.FileSize,
-					MediaType:   image.Media.MediaType,
-					Description: image.Media.Description,
-					CreatedAt:   image.Media.CreatedAt,
-					UpdatedAt:   image.Media.UpdatedAt,
-				}
-			}
+			response[i].ThumbnailURL = result.URL
 		}
 	}
+
+	productJSON, err := json.MarshalIndent(response, "", "  ")
+	if err != nil {
+		return nil, 0, err
+	}
+	fmt.Println(string(productJSON))
 
 	return response, total, nil
 }
@@ -104,77 +90,55 @@ func (s *productService) FindByID(product_id string) (*ProductResponse, error) {
 	}
 
 	response := ProductResponse{
-		ProductID:   product.ProductID,
-		Name:        product.Name,
-		CategoryID:  product.CategoryID,
-		Category:    product.Category.Name,
-		Description: product.Description,
-		Variants:    make([]VariantResponse, len(product.Variants)),
-		Images:      make([]media.MediaResponse, len(product.Images)),
-		CreatedAt:   product.CreatedAt,
-		UpdatedAt:   product.UpdatedAt,
+		ProductID:    product.ProductID,
+		Name:         product.Name,
+		CategoryID:   product.CategoryID,
+		CategoryName: product.Category.Name,
+		BasePrice:    product.BasePrice,
+		Description:  product.Description,
+		Variants:     make([]VariantResponse, len(product.Variants)),
+		IsActive:     product.IsActive,
+		CreatedAt:    product.CreatedAt,
+		UpdatedAt:    product.UpdatedAt,
 	}
-	for j, variant := range product.Variants {
-		response.Variants[j] = VariantResponse{
-			VariantID:    variant.VariantID,
-			SKU:          variant.SKU,
-			Price:        variant.Price,
-			Quantity:     variant.Quantity,
-			RestockLevel: variant.RestockLevel,
-			IsActive:     variant.IsActive,
-			Status:       variant.Status,
-			CreatedAt:    variant.CreatedAt,
-			UpdatedAt:    variant.UpdatedAt,
-			Attributes:   make([]AttributeResponse, len(variant.Attributes)),
+
+	if product.ThumbnailID != nil {
+		result, err := s.s3Client.GetObject(ctx, s.cfg.AWS_BUCKET_NAME, product.Thumbnail.Path, int64(3600))
+		if err != nil {
+			log.Println(err.Error())
+		}
+
+		response.ThumbnailURL = result.URL
+	}
+
+	for i, variant := range product.Variants {
+		response.Variants[i] = VariantResponse{
+			VariantID:       variant.VariantID,
+			SKU:             variant.SKU,
+			AdditionalPrice: variant.AdditionalPrice,
+			StockQuantity:   variant.StockQuantity,
+			RestockLevel:    variant.RestockLevel,
+			IsActive:        variant.IsActive,
+			Status:          variant.Status,
+			CreatedAt:       variant.CreatedAt,
+			UpdatedAt:       variant.UpdatedAt,
+			Attributes:      make([]AttributeResponse, len(variant.Attributes)),
 		}
 
 		if variant.Image != nil {
-			result, err := s.s3Client.GetObject(ctx, config.AppConfig.AWS_BUCKET_NAME, variant.Image.FilePath, int64(3600))
+			result, err := s.s3Client.GetObject(ctx, s.cfg.AWS_BUCKET_NAME, variant.Image.Path, int64(3600))
 			if err != nil {
 				log.Println(err.Error())
+				continue
 			}
 
-			response.Variants[j].Image = media.MediaResponse{
-				MediaID:     variant.Image.MediaID,
-				FileURL:     result.URL,
-				FileName:    variant.Image.FileName,
-				FilePath:    variant.Image.FilePath,
-				FileType:    variant.Image.FileType,
-				FileSize:    variant.Image.FileSize,
-				MediaType:   variant.Image.MediaType,
-				Description: variant.Image.Description,
-				CreatedAt:   variant.Image.CreatedAt,
-				UpdatedAt:   variant.Image.UpdatedAt,
-			}
+			response.Variants[i].ImageURL = result.URL
 		}
 
-		for k, attribute := range variant.Attributes {
-			response.Variants[j].Attributes[k] = AttributeResponse{
-				AttributeID: attribute.AttributeID,
-				Attribute:   attribute.Attribute,
-				Value:       attribute.Value,
-			}
-		}
-	}
-
-	if len(product.Images) > 0 {
-		for j, image := range product.Images {
-			result, err := s.s3Client.GetObject(ctx, config.AppConfig.AWS_BUCKET_NAME, image.Media.FilePath, int64(3600))
-			if err != nil {
-				log.Println(err.Error())
-			}
-
-			response.Images[j] = media.MediaResponse{
-				MediaID:     image.MediaID,
-				FileURL:     result.URL,
-				FileName:    image.Media.FileName,
-				FilePath:    image.Media.FilePath,
-				FileType:    image.Media.FileType,
-				FileSize:    image.Media.FileSize,
-				MediaType:   image.Media.MediaType,
-				Description: image.Media.Description,
-				CreatedAt:   image.Media.CreatedAt,
-				UpdatedAt:   image.Media.UpdatedAt,
+		for j, attribute := range variant.Attributes {
+			response.Variants[i].Attributes[j] = AttributeResponse{
+				AttributeName:  attribute.AttributeName,
+				AttributeValue: attribute.AttributeValue,
 			}
 		}
 	}
@@ -183,7 +147,10 @@ func (s *productService) FindByID(product_id string) (*ProductResponse, error) {
 }
 
 // Update implements ProductServiceImpl.
-func (s *productService) Update(product_id string, request ProductUpdateDto) error {
+func (s *productService) Update(product_id string, request UpdateProductDTO) error {
+	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
+	defer cancel()
+
 	product, err := s.productRepo.FindById(product_id)
 	if err != nil {
 		return err
@@ -197,81 +164,43 @@ func (s *productService) Update(product_id string, request ProductUpdateDto) err
 		product.Name = *request.Name
 	}
 
+	if request.BasePrice != nil {
+		product.BasePrice = *request.BasePrice
+	}
+
 	if request.Description != nil {
 		product.Description = *request.Description
 	}
 
-	for _, variantReq := range *request.Variants {
-		//check update variant
-		if variantReq.VariantID != nil {
-			//loop update vairant
-			for i, v := range product.Variants {
-				//check if req has id
-				if v.VariantID == *variantReq.VariantID {
-					//check update attribute
-					if variantReq.Attributes != nil {
-						for _, attributeReq := range *variantReq.Attributes {
-							if attributeReq.AttributeID != nil {
-								for j, a := range product.Variants[i].Attributes {
-									if a.AttributeID == *attributeReq.AttributeID {
-										if attributeReq.Attribute != nil {
-											fmt.Println(attributeReq.Attribute)
-											product.Variants[i].Attributes[j] = schema.Attribute{
-												ID:          a.ID,
-												VariantID:   a.VariantID,
-												AttributeID: *attributeReq.AttributeID,
-												Attribute:   *attributeReq.Attribute,
-												Value:       *attributeReq.Value,
-											}
-										}
-									}
-								}
-							}
-							//  else {
-							// 	newAttribute := schema.Attribute{
-							// 		AttributeID: uuid.NewString(),
-							// 		VariantID:   *variantReq.VariantID,
-							// 		Attribute:   *attributeReq.Attribute,
-							// 		Value:       *attributeReq.Value,
-							// 	}
-							// 	product.Variants[i].Attributes = append(product.Variants[i].Attributes, newAttribute)
-							// }
-						}
-					}
-				}
-			}
-		} else {
-			newVariantID := uuid.NewString()
-			SKU := product.Name
+	if request.IsActive != nil {
+		product.IsActive = *request.IsActive
+	}
 
-			newVariant := schema.Variant{
-				VariantID:  newVariantID,
-				Attributes: make([]schema.Attribute, len(*variantReq.Attributes)),
-			}
-
-			product.Variants = append(product.Variants, newVariant)
-
-			for i, attribute := range *variantReq.Attributes {
-				newAttribute := schema.Attribute{
-					AttributeID: uuid.NewString(),
-					VariantID:   newVariantID,
-					Attribute:   *attribute.Attribute,
-					Value:       *attribute.Value,
-				}
-				SKU += " " + newAttribute.Value
-
-				product.Variants[len(product.Variants)-1].Attributes[i] = newAttribute
-			}
-
-			newVariant.SKU = utils.GenerateSKU(SKU, 14, "SKU-", 3)
+	if request.Thumbnail != nil {
+		if product.Thumbnail.Path != "" {
+			_ = s.s3Client.DeleteObjects(ctx, s.cfg.AWS_BUCKET_NAME, []string{product.Thumbnail.Path})
 		}
-	}
 
-	productJSON, err := json.MarshalIndent(product, "", "  ")
-	if err != nil {
-		return err
+		sourcePath := path.Join("tmp", request.Thumbnail.Name)
+		destPath := path.Join("products", product.ProductID, request.Thumbnail.Name)
+
+		if err := s.s3Client.CopyToFolder(ctx, s.cfg.AWS_BUCKET_NAME, sourcePath, destPath); err != nil {
+			return err_response.NewInternalServerError()
+		}
+
+		if err := s.s3Client.DeleteObjects(ctx, s.cfg.AWS_BUCKET_NAME, []string{sourcePath}); err != nil {
+			return err_response.NewInternalServerError()
+		}
+
+		product.Thumbnail = &schema.Media{
+			Name:           request.Thumbnail.Name,
+			Path:           destPath,
+			Type:           request.Thumbnail.Type,
+			Size:           request.Thumbnail.Size,
+			CollectionType: "thumbnail",
+		}
+
 	}
-	fmt.Println(string(productJSON))
 
 	err = s.productRepo.Update(product)
 	if err != nil {
@@ -282,66 +211,63 @@ func (s *productService) Update(product_id string, request ProductUpdateDto) err
 }
 
 // Create implements ProductRepositoryImpl.
-func (s *productService) Create(product ProductCreateDto) error {
+func (s *productService) Create(request CreateProductDTO) error {
 	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
 	defer cancel()
 
 	newProduct := schema.Product{
 		ProductID:   uuid.NewString(),
-		Name:        product.Name,
-		CategoryID:  product.CategoryID,
-		Description: product.Description,
-		Images:      make([]schema.ProductMedia, len(product.Images)),
+		Name:        request.Name,
+		CategoryID:  request.CategoryID,
+		BasePrice:   request.BasePrice,
+		Description: request.Description,
 	}
 
-	for idx, image := range product.Images {
+	if request.Thumbnail != nil {
 		newMediaID := uuid.NewString()
-		sourcePath := path.Join("tmp", image.FileName)
-		destPath := path.Join("products", newProduct.ProductID, image.FileName)
+		sourcePath := path.Join("tmp", request.Thumbnail.Name)
+		destPath := path.Join("products", newProduct.ProductID, request.Thumbnail.Name)
 
-		if err := s.s3Client.CopyToFolder(ctx, config.AppConfig.AWS_BUCKET_NAME, sourcePath, destPath); err != nil {
+		if err := s.s3Client.CopyToFolder(ctx, s.cfg.AWS_BUCKET_NAME, sourcePath, destPath); err != nil {
 			return err_response.NewInternalServerError()
 		}
 
-		if err := s.s3Client.DeleteObjects(ctx, config.AppConfig.AWS_BUCKET_NAME, []string{sourcePath}); err != nil {
+		if err := s.s3Client.DeleteObjects(ctx, s.cfg.AWS_BUCKET_NAME, []string{sourcePath}); err != nil {
 			return err_response.NewInternalServerError()
 		}
 
-		newProduct.Images[idx] = schema.ProductMedia{
-			MediaID:   newMediaID,
-			ProductID: newProduct.ProductID,
-			Media: schema.Media{
-				MediaID:     newMediaID,
-				FileName:    image.FileName,
-				FileType:    image.FileType,
-				FileSize:    image.FileSize,
-				FilePath:    destPath,
-				MediaType:   image.MediaType,
-				Description: image.Description,
-			},
+		newProduct.Thumbnail = &schema.Media{
+			ID:             newMediaID,
+			Name:           request.Thumbnail.Name,
+			Path:           destPath,
+			Type:           request.Thumbnail.Type,
+			Size:           request.Thumbnail.Size,
+			CollectionType: "thumbnail",
 		}
 	}
 
-	for _, variant := range product.Variants {
+	for _, variantReq := range request.Variants {
 		newVariantID := uuid.NewString()
-		SKU := product.Name
 
-		newVariant := schema.Variant{
-			VariantID:  newVariantID,
-			Attributes: make([]schema.Attribute, len(variant.Attributes)),
+		newVariant := &schema.ProductVariant{
+			VariantID:       newVariantID,
+			SKU:             variantReq.SKU,
+			VariantName:     variantReq.VariantName,
+			AdditionalPrice: variantReq.AdditionalPrice,
+			StockQuantity:   variantReq.StockQuantity,
+			RestockLevel:    variantReq.RestockLevel,
+			Attributes:      make([]schema.Attribute, len(variantReq.Attributes)),
 		}
 
-		for idx, attribute := range variant.Attributes {
-			SKU += " " + attribute.Value
+		for idx, attribute := range variantReq.Attributes {
 			newVariant.Attributes[idx] = schema.Attribute{
-				AttributeID: uuid.NewString(),
-				Attribute:   attribute.Attribute,
-				Value:       attribute.Value,
+				VariantID:      newVariantID,
+				AttributeName:  attribute.AttributeName,
+				AttributeValue: attribute.AttributeValue,
 			}
 		}
 
-		newVariant.SKU = utils.GenerateSKU(SKU, 14, "SKU-", 3)
-		newProduct.Variants = append(newProduct.Variants, newVariant)
+		newProduct.Variants = append(newProduct.Variants, *newVariant)
 	}
 
 	if err := s.productRepo.Create(&newProduct); err != nil {

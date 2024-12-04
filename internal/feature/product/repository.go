@@ -53,8 +53,12 @@ func (r *productRepository) FindAll(page int, limit int) ([]schema.Product, int6
 
 	query := r.db.Model(&schema.Product{})
 
-	if err := query.Preload("Category").Count(&total).Limit(limit).Offset(offset).Find(&data).Error; err != nil {
-		return nil, 0, err
+	if err := query.Preload("Category").Preload("Images").Preload("Images.Media").Count(&total).Limit(limit).Offset(offset).Find(&data).Error; err != nil {
+		if errors.Is(err, gorm.ErrRecordNotFound) {
+			log.Printf("%s", err.Error())
+			return nil, 0, err_response.NewNotFoundError("No products found!")
+		}
+		return nil, 0, err_response.NewInternalServerError()
 	}
 
 	return data, total, nil

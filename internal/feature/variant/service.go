@@ -9,6 +9,7 @@ import (
 	"inverntory_management/internal/feature/product"
 	aws_service "inverntory_management/pkg/aws"
 	err_response "inverntory_management/pkg/errors"
+	"log"
 	"path"
 	"time"
 
@@ -16,10 +17,9 @@ import (
 )
 
 type VariantService interface {
-	//variant
-	FindByID(variant_id string) (*schema.Variant, error)
-	Create(variant_id string, variant CreateVariantDto) error
-	Update(variant_id string, variant UpdateVariantDto) error
+	FindByID(variant_id string) (*VariantResponse, error)
+	Create(variant_id string, request CreateVariantDTO) error
+	Update(variant_id string, request UpdateVariantDTO) error
 	Delete(variant_id string) error
 }
 
@@ -27,24 +27,58 @@ type variantService struct {
 	vairantRepo VariantRepository
 	productRepo product.ProductRepositoryImpl
 	s3Client    aws_service.S3Client
+	cfg         config.Config
 }
 
-func NewProductService(variantRepo VariantRepository, productRepo product.ProductRepositoryImpl, s3Client aws_service.S3Client) VariantService {
-	return &variantService{vairantRepo: variantRepo, productRepo: productRepo, s3Client: s3Client}
+func NewVariantService(variantRepo VariantRepository, productRepo product.ProductRepositoryImpl, s3Client aws_service.S3Client, cfg config.Config) VariantService {
+	return &variantService{vairantRepo: variantRepo, productRepo: productRepo, s3Client: s3Client, cfg: cfg}
 }
 
 // FindByID implements VariantService.
-func (s *variantService) FindByID(variant_id string) (*schema.Variant, error) {
+func (s *variantService) FindByID(variant_id string) (*VariantResponse, error) {
+	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
+	defer cancel()
+
 	variant, err := s.vairantRepo.FindByID(variant_id)
 	if err != nil {
 		return nil, err
 	}
 
-	return variant, nil
+	response := &VariantResponse{
+		VariantID:       variant.VariantID,
+		SKU:             variant.SKU,
+		VariantName:     variant.VariantName,
+		AdditionalPrice: variant.AdditionalPrice,
+		StockQuantity:   variant.StockQuantity,
+		RestockLevel:    variant.RestockLevel,
+		IsActive:        variant.IsActive,
+		Status:          variant.Status,
+		Attributes:      make([]AttributeResponse, len(variant.Attributes)),
+		CreatedAt:       variant.CreatedAt,
+		UpdatedAt:       variant.UpdatedAt,
+	}
+
+	if variant.Image != nil {
+		result, err := s.s3Client.GetObject(ctx, s.cfg.AWS_BUCKET_NAME, variant.Image.Path, int64(3600))
+		if err != nil {
+			log.Println(err.Error())
+		}
+
+		response.ImageURL = result.URL
+	}
+
+	for i, attr := range variant.Attributes {
+		response.Attributes[i] = AttributeResponse{
+			AttributeName:  attr.AttributeName,
+			AttributeValue: attr.AttributeValue,
+		}
+	}
+
+	return response, nil
 }
 
 // AddVariant implements ProductServiceImpl.
-func (s *variantService) Create(product_id string, req CreateVariantDto) error {
+func (s *variantService) Create(product_id string, request CreateVariantDTO) error {
 	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
 	defer cancel()
 
@@ -53,24 +87,21 @@ func (s *variantService) Create(product_id string, req CreateVariantDto) error {
 		return err
 	}
 
-	SKU := product.Name
-
-	newVariant := schema.Variant{
-		VariantID:    uuid.NewString(),
-		ProductID:    product.ProductID,
-		SKU:          req.SKU,
-		Price:        req.Price,
-		Quantity:     req.Quantity,
-		RestockLevel: req.RestockLevel,
-		Attributes:   make([]schema.Attribute, len(req.Attributes)),
+	newVariant := schema.ProductVariant{
+		VariantID:       uuid.NewString(),
+		ProductID:       product.ProductID,
+		SKU:             request.SKU,
+		AdditionalPrice: request.AdditionalPrice,
+		StockQuantity:   request.StockQuantity,
+		RestockLevel:    request.RestockLevel,
+		Attributes:      make([]schema.Attribute, len(request.Attributes)),
 	}
 
-	if req.Image != nil {
-		newMediaID := uuid.NewString()
-		sourcePath := path.Join("tmp", req.Image.FileName)
-		destPath := path.Join("products", product.ProductID, req.Image.FileName)
+	if request.Image != nil {
+		sourcePath := path.Join("tmp", request.Image.Name)
+		destPath := path.Join("products", product.ProductID, request.Image.Name)
 
-		if err := s.s3Client.CopyToFolder(ctx, config.AppConfig.AWS_BUCKET_NAME, sourcePath, destPath); err != nil {
+		if err := s.s3Client.CopyToFolder(ctx, s.cfg.AWS_BUCKET_NAME, sourcePath, destPath); err != nil {
 			return err_response.NewInternalServerError()
 		}
 
@@ -79,22 +110,19 @@ func (s *variantService) Create(product_id string, req CreateVariantDto) error {
 		}
 
 		newVariant.Image = &schema.Media{
-			MediaID:     newMediaID,
-			FileName:    req.Image.FileName,
-			FileType:    req.Image.FileType,
-			FileSize:    req.Image.FileSize,
-			FilePath:    destPath,
-			MediaType:   req.Image.MediaType,
-			Description: req.Image.Description,
+			ID:             uuid.NewString(),
+			Name:           request.Image.Name,
+			Path:           destPath,
+			Size:           request.Image.Size,
+			Type:           request.Image.Type,
+			CollectionType: request.Image.CollectionType,
 		}
 	}
 
-	for idx, attribute := range req.Attributes {
-		SKU += " " + attribute.Value
+	for idx, attribute := range request.Attributes {
 		newVariant.Attributes[idx] = schema.Attribute{
-			AttributeID: uuid.NewString(),
-			Attribute:   attribute.Attribute,
-			Value:       attribute.Value,
+			AttributeName:  attribute.AttributeName,
+			AttributeValue: attribute.AttributeValue,
 		}
 	}
 
@@ -106,7 +134,7 @@ func (s *variantService) Create(product_id string, req CreateVariantDto) error {
 }
 
 // UpdateVariant implements ProductServiceImpl.
-func (s *variantService) Update(variant_id string, req UpdateVariantDto) error {
+func (s *variantService) Update(variant_id string, request UpdateVariantDTO) error {
 	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
 	defer cancel()
 
@@ -115,68 +143,71 @@ func (s *variantService) Update(variant_id string, req UpdateVariantDto) error {
 		return err
 	}
 
-	if req.SKU != nil {
-		vairant.SKU = *req.SKU
+	if request.SKU != nil {
+		vairant.SKU = *request.SKU
 	}
 
-	if req.Price != nil {
-		vairant.Price = *req.Price
+	if request.AdditionalPrice != nil {
+		vairant.AdditionalPrice = *request.AdditionalPrice
 	}
 
-	if req.Quantity != nil {
-		vairant.Quantity = *req.Quantity
+	if request.StockQuantity != nil {
+		vairant.StockQuantity = *request.StockQuantity
 	}
 
-	if req.RestockLevel != nil {
-		vairant.RestockLevel = *req.RestockLevel
+	if request.RestockLevel != nil {
+		vairant.RestockLevel = *request.RestockLevel
 	}
 
-	if req.Attributes != nil {
-		for idx, attribute := range *req.Attributes {
-			if attribute.AttributeID != nil {
-				vairant.Attributes[idx].Attribute = *attribute.Attribute
-				vairant.Attributes[idx].Value = *attribute.Value
+	if request.IsActive != nil {
+		vairant.IsActive = *request.IsActive
+	}
+
+	if request.Status != nil {
+		vairant.Status = *request.Status
+	}
+
+	if request.Attributes != nil {
+		for idx, attReq := range *request.Attributes {
+			if *attReq.AttributeName == vairant.Attributes[idx].AttributeName {
+				vairant.Attributes[idx].AttributeValue = *attReq.AttributeValue
 			} else {
 				newAttribute := schema.Attribute{
-					AttributeID: uuid.NewString(),
-					Attribute:   *attribute.Attribute,
-					Value:       *attribute.Value,
+					AttributeName:  *attReq.AttributeName,
+					AttributeValue: *attReq.AttributeValue,
 				}
+
 				vairant.Attributes = append(vairant.Attributes, newAttribute)
 			}
 		}
 	}
 
-	if req.Image != nil {
-		fmt.Println("here=>")
+	if request.Image != nil {
 		if vairant.Image != nil {
-			if err := s.s3Client.DeleteObjects(ctx, config.AppConfig.AWS_BUCKET_NAME, []string{vairant.Image.FilePath}); err != nil {
+			if err := s.s3Client.DeleteObjects(ctx, s.cfg.AWS_BUCKET_NAME, []string{vairant.Image.Path}); err != nil {
 				return err_response.NewInternalServerError()
 			}
 		}
 
-		newMediaID := uuid.NewString()
-		sourcePath := path.Join("tmp", req.Image.FileName)
-		destPath := path.Join("products", vairant.ProductID, req.Image.FileName)
+		sourcePath := path.Join("tmp", request.Image.Name)
+		destPath := path.Join("products", vairant.ProductID, request.Image.Name)
 
-		if err := s.s3Client.CopyToFolder(ctx, config.AppConfig.AWS_BUCKET_NAME, sourcePath, destPath); err != nil {
+		if err := s.s3Client.CopyToFolder(ctx, s.cfg.AWS_BUCKET_NAME, sourcePath, destPath); err != nil {
 			return err_response.NewInternalServerError()
 		}
 
-		if err := s.s3Client.DeleteObjects(ctx, config.AppConfig.AWS_BUCKET_NAME, []string{sourcePath}); err != nil {
+		if err := s.s3Client.DeleteObjects(ctx, s.cfg.AWS_BUCKET_NAME, []string{sourcePath}); err != nil {
 			return err_response.NewInternalServerError()
 		}
 
 		vairant.Image = &schema.Media{
-			MediaID:     newMediaID,
-			FileName:    req.Image.FileName,
-			FileType:    req.Image.FileType,
-			FileSize:    req.Image.FileSize,
-			FilePath:    destPath,
-			MediaType:   req.Image.MediaType,
-			Description: req.Image.Description,
+			ID:             uuid.NewString(),
+			Name:           request.Image.Name,
+			Path:           destPath,
+			Size:           request.Image.Size,
+			Type:           request.Image.Type,
+			CollectionType: request.Image.CollectionType,
 		}
-		vairant.ImageID = &newMediaID
 	}
 
 	productJSON, err := json.MarshalIndent(vairant, "", "  ")

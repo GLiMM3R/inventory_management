@@ -24,10 +24,11 @@ type FileServiceImpl interface {
 
 type fileService struct {
 	s3Client aws_service.S3Client
+	cfg      config.Config
 }
 
-func NewFileService(s3Client aws_service.S3Client) FileServiceImpl {
-	return &fileService{s3Client: s3Client}
+func NewFileService(s3Client aws_service.S3Client, cfg config.Config) FileServiceImpl {
+	return &fileService{s3Client: s3Client, cfg: cfg}
 }
 
 func (f *fileService) UploadMultiFiles(fileType string, files []*multipart.FileHeader) ([]string, error) {
@@ -110,7 +111,7 @@ func (s *fileService) GeneratePresignPutObject(request PutObjectRequest) (*PutOb
 	fileName := uuid.NewString() + filepath.Ext(request.FileName)
 	filePath := filepath.Join("tmp", fileName)
 
-	res, err := s.s3Client.PutObject(ctx, config.AppConfig.AWS_BUCKET_NAME, filePath, int64(3600))
+	res, err := s.s3Client.PutObject(ctx, s.cfg.AWS_BUCKET_NAME, filePath, int64(3600))
 	if err != nil {
 		return nil, custom.NewInternalServerError()
 	}

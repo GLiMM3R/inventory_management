@@ -9,11 +9,11 @@ import (
 
 var ctx = context.Background()
 
-func InitRedis() *redis.Client {
+func InitRedis(cfg config.Config) *redis.Client {
 	client := redis.NewClient(&redis.Options{
-		Addr:     config.AppConfig.REDIS_ADDR,
-		Password: config.AppConfig.REDIS_PWD,
-		DB:       config.AppConfig.REDIS_DB,
+		Addr:     cfg.REDIS_ADDR,
+		Password: cfg.REDIS_PWD,
+		DB:       cfg.REDIS_DB,
 	})
 
 	_, err := client.Ping(ctx).Result()

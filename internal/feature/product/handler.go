@@ -3,7 +3,7 @@ package product
 import (
 	"inverntory_management/internal/exception"
 	"inverntory_management/internal/types"
-	custom "inverntory_management/pkg/errors"
+	err_response "inverntory_management/pkg/errors"
 	"net/http"
 	"strconv"
 
@@ -31,7 +31,7 @@ func (h *ProductHandler) GetProducts(c echo.Context) error {
 
 	products, total, err := h.productService.FindAll(page, limit)
 	if err != nil {
-		return exception.HandleError(c, err)
+		return err
 	}
 
 	return c.JSON(http.StatusOK, types.Response{
@@ -58,14 +58,14 @@ func (h *ProductHandler) GetProduct(c echo.Context) error {
 }
 
 func (h *ProductHandler) CreateProduct(c echo.Context) error {
-	dto := new(ProductCreateDto)
+	dto := new(CreateProductDTO)
 	if err := c.Bind(dto); err != nil {
-		return custom.NewBadRequestError(err.Error())
+		return err_response.NewBadRequestError(err.Error())
 
 	}
 
 	if err := c.Validate(dto); err != nil {
-		return custom.NewBadRequestError(err.Error())
+		return err_response.NewBadRequestError(err.Error())
 	}
 
 	if err := h.productService.Create(*dto); err != nil {
@@ -81,23 +81,23 @@ func (h *ProductHandler) CreateProduct(c echo.Context) error {
 
 func (h *ProductHandler) UpdateProduct(c echo.Context) error {
 	product_id := c.Param("id")
-	dto := new(ProductUpdateDto)
+	dto := new(UpdateProductDTO)
 	if err := c.Bind(dto); err != nil {
-		return custom.NewBadRequestError(err.Error())
+		return err_response.NewBadRequestError(err.Error())
 
 	}
 
 	if err := c.Validate(dto); err != nil {
-		return custom.NewBadRequestError(err.Error())
+		return err_response.NewBadRequestError(err.Error())
 	}
 
 	if err := h.productService.Update(product_id, *dto); err != nil {
 		return err
 	}
 
-	return c.JSON(http.StatusCreated, types.Response{
+	return c.JSON(http.StatusOK, types.Response{
 		Data:     true,
-		Status:   http.StatusCreated,
+		Status:   http.StatusOK,
 		Messages: "Success",
 	})
 }

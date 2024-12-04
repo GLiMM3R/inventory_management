@@ -5,9 +5,10 @@ import (
 )
 
 func InitVariantRoutes(e *echo.Echo, service VariantService) {
-	h := NewProductHandler(service)
-	r := e.Group("/products")
-	r.POST("/:product_id/variants", h.AddVariant)
-	r.PATCH("/:product_id/variants/:id", h.Update)
-	r.DELETE("/:product_id/variants/:id", h.Delete)
+	h := NewVariantHandler(service)
+	r := e.Group("/variants")
+	r.GET("/:id", h.GetVariant)
+	r.POST("/:product_id", h.CreateVariant)
+	r.PATCH("/:id", h.UpdateVariant)
+	r.DELETE("/:id", h.DeleteVariant)
 }

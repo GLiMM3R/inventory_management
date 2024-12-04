@@ -1,21 +1,21 @@
 package main
 
 import (
-	"fmt"
+	"context"
 	"inverntory_management/config"
 	"inverntory_management/internal/app"
+	"os"
+	"os/signal"
 )
 
 func main() {
 	// Initialize the application
-	e, err := app.Initialize()
-	if err != nil {
-		panic(fmt.Sprintf("Failed to initialize application: %v", err))
-	}
+	app := app.New(config.LoadConfig(".", ".env"))
 
-	port := fmt.Sprintf(":%d", config.AppConfig.PORT)
+	ctx, cancel := signal.NotifyContext(context.Background(), os.Interrupt)
+	defer cancel()
 
-	e.Logger.Fatal(e.Start(port))
+	app.Start(ctx)
 	// ctx, stop := signal.NotifyContext(context.Background(), os.Interrupt)
 	// defer stop()
 	// // Start server

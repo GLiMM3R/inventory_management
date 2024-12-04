@@ -1,7 +1,6 @@
 package variant
 
 import (
-	"inverntory_management/internal/exception"
 	"inverntory_management/internal/types"
 	err_response "inverntory_management/pkg/errors"
 	"net/http"
@@ -13,20 +12,35 @@ type VariantHandler struct {
 	variantService VariantService
 }
 
-func NewProductHandler(variantService VariantService) *VariantHandler {
+func NewVariantHandler(variantService VariantService) *VariantHandler {
 	return &VariantHandler{variantService: variantService}
 }
 
-func (h *VariantHandler) AddVariant(c echo.Context) error {
+func (h *VariantHandler) GetVariant(c echo.Context) error {
+	id := c.Param("id")
+
+	variant, err := h.variantService.FindByID(id)
+	if err != nil {
+		return err
+	}
+
+	return c.JSON(http.StatusOK, types.Response{
+		Data:     variant,
+		Status:   http.StatusOK,
+		Messages: "Success",
+	})
+}
+
+func (h *VariantHandler) CreateVariant(c echo.Context) error {
 	product_id := c.Param("product_id")
 
-	dto := new(CreateVariantDto)
+	dto := new(CreateVariantDTO)
 	if err := c.Bind(dto); err != nil {
-		return exception.HandleError(c, err)
+		return err_response.NewBadRequestError(err.Error())
 	}
 
 	if err := c.Validate(dto); err != nil {
-		return exception.HandleError(c, err)
+		return err_response.NewBadRequestError(err.Error())
 	}
 
 	if err := h.variantService.Create(product_id, *dto); err != nil {
@@ -40,10 +54,10 @@ func (h *VariantHandler) AddVariant(c echo.Context) error {
 	})
 }
 
-func (h *VariantHandler) Update(c echo.Context) error {
+func (h *VariantHandler) UpdateVariant(c echo.Context) error {
 	id := c.Param("id")
 
-	dto := new(UpdateVariantDto)
+	dto := new(UpdateVariantDTO)
 	if err := c.Bind(dto); err != nil {
 		return err_response.NewBadRequestError(err.Error())
 	}
@@ -56,21 +70,21 @@ func (h *VariantHandler) Update(c echo.Context) error {
 		return err
 	}
 
-	return c.JSON(http.StatusCreated, types.Response{
+	return c.JSON(http.StatusOK, types.Response{
 		Data:     true,
 		Status:   http.StatusOK,
 		Messages: "Success",
 	})
 }
 
-func (h *VariantHandler) Delete(c echo.Context) error {
+func (h *VariantHandler) DeleteVariant(c echo.Context) error {
 	id := c.Param("id")
 
 	if err := h.variantService.Delete(id); err != nil {
 		return err
 	}
 
-	return c.JSON(http.StatusCreated, types.Response{
+	return c.JSON(http.StatusOK, types.Response{
 		Data:     true,
 		Status:   http.StatusOK,
 		Messages: "Success",
