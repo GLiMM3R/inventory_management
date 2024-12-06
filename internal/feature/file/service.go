@@ -20,6 +20,7 @@ type FileServiceImpl interface {
 	UploadFile(fileType string, file *multipart.FileHeader) (string, error)
 	ReadFile(directory, fileName string) ([]byte, error)
 	GeneratePresignPutObject(request PutObjectRequest) (*PutObjectResponse, error)
+	GeneratePresignGetObject(request GetObjectRequest) (*GetObjectResponse, error)
 }
 
 type fileService struct {
@@ -119,6 +120,24 @@ func (s *fileService) GeneratePresignPutObject(request PutObjectRequest) (*PutOb
 	return &PutObjectResponse{
 		URL:      res.URL,
 		FileName: fileName,
+		FilePath: filePath,
+	}, nil
+}
+
+func (s *fileService) GeneratePresignGetObject(request GetObjectRequest) (*GetObjectResponse, error) {
+	// ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
+	// defer cancel()
+
+	filePath := filepath.Join(request.Directory, request.FileName)
+	fmt.Println("file=>", filePath)
+	res, err := s.s3Client.GetObject(context.TODO(), s.cfg.AWS_BUCKET_NAME, filePath, "image/jpeg", int64(3600))
+	if err != nil {
+		return nil, custom.NewInternalServerError()
+	}
+
+	return &GetObjectResponse{
+		URL:      res.URL,
+		FileName: request.FileName,
 		FilePath: filePath,
 	}, nil
 }

@@ -90,3 +90,21 @@ func (h *FileHandler) GeneratePresignPutObject(c echo.Context) error {
 		Messages: "Success",
 	})
 }
+
+func (h *FileHandler) GeneratePresignGetObject(c echo.Context) error {
+	var request GetObjectRequest
+	if err := c.Bind(&request); err != nil {
+		return c.JSON(http.StatusBadRequest, map[string]string{"error": "Invalid request"})
+	}
+
+	res, err := h.service.GeneratePresignGetObject(request)
+	if err != nil {
+		return err
+	}
+
+	return c.JSON(http.StatusOK, types.Response{
+		Data:     res,
+		Status:   http.StatusOK,
+		Messages: "Success",
+	})
+}

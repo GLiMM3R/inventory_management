@@ -12,4 +12,5 @@ func InitFileRoutes(e *echo.Echo, service FileServiceImpl) {
 	r.POST("/multiple", h.UploadMultiFiles)
 	r.GET("/:directory/:name", h.GetFile)
 	r.POST("/generate-presign", h.GeneratePresignPutObject)
+	r.POST("/get-object", h.GeneratePresignGetObject)
 }

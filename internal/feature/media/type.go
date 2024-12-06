@@ -14,5 +14,6 @@ type MediaResponse struct {
 	Path           string `json:"path"`
 	Type           string `json:"type"`
 	Size           uint   `json:"size"`
+	URL            string `json:"url"`
 	CollectionType string `json:"collection_type"`
 }

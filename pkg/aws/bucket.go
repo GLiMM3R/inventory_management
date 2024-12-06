@@ -351,3 +351,19 @@ func (s *S3Client) DeleteBucket(ctx context.Context, bucketName string) error {
 	}
 	return err
 }
+
+// generate function to check Object
+func (s *S3Client) CheckObjectExists(ctx context.Context, bucketName string, objectKey string) (bool, error) {
+	_, err := s.client.HeadObject(ctx, &s3.HeadObjectInput{
+		Bucket: aws.String(bucketName),
+		Key:    aws.String(objectKey),
+	})
+	if err != nil {
+		var notFound *types.NoSuchKey
+		if errors.As(err, &notFound) {
+			return false, nil
+		}
+		return false, err
+	}
+	return true, nil
+}

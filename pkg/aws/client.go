@@ -50,8 +50,17 @@ func NewS3Client(cfg Config) (*S3Client, error) {
 	// 	o.EndpointResolverV2 = &resolverV2{}
 	// })
 
+	// options := s3.Options{
+	// 	Region:       cfg.Region,
+	// 	Credentials:  aws.NewCredentialsCache(credentials.NewStaticCredentialsProvider(cfg.AccessKeyID, cfg.SecretAccessKey, "")),
+	// 	BaseEndpoint: aws.String(cfg.Endpoint),
+	// }
+
+	// client := s3.New(options, func(o *s3.Options) {
+	// 	o.UsePathStyle = true
+	// })
 	options := s3.Options{
-		Region:       cfg.Region,
+		Region:       *aws.String(cfg.Region),
 		Credentials:  aws.NewCredentialsCache(credentials.NewStaticCredentialsProvider(cfg.AccessKeyID, cfg.SecretAccessKey, "")),
 		BaseEndpoint: aws.String(cfg.Endpoint),
 	}
@@ -59,6 +68,14 @@ func NewS3Client(cfg Config) (*S3Client, error) {
 	client := s3.New(options, func(o *s3.Options) {
 		o.UsePathStyle = true
 	})
+	// s3Config := &aws.Config{
+	// 	Credentials:  credentials.NewStaticCredentialsProvider(cfg.AccessKeyID, cfg.SecretAccessKey, ""),
+	// 	BaseEndpoint: aws.String(cfg.Endpoint),
+	// 	Region:       *aws.String(cfg.Region),
+	// }
+	// newSession := session.New(s3Config)
+
+	// client := s3.New(newSession)
 
 	presignClient := s3.NewPresignClient(client)
 

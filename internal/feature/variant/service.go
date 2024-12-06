@@ -59,7 +59,7 @@ func (s *variantService) FindByID(variant_id string) (*VariantResponse, error) {
 	}
 
 	if variant.Image != nil {
-		result, err := s.s3Client.GetObject(ctx, s.cfg.AWS_BUCKET_NAME, variant.Image.Path, int64(3600))
+		result, err := s.s3Client.GetObject(ctx, s.cfg.AWS_BUCKET_NAME, variant.Image.Path, variant.Image.Type, int64(3600))
 		if err != nil {
 			log.Println(err.Error())
 		}

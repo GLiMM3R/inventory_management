@@ -53,7 +53,7 @@ func (r *productRepository) FindAll(page int, limit int) ([]schema.Product, int6
 
 	query := r.db.Model(&schema.Product{})
 
-	if err := query.Preload("Category").Preload("Thumbail").Count(&total).Limit(limit).Offset(offset).Find(&data).Error; err != nil {
+	if err := query.Preload("Category").Preload("Thumbnail").Count(&total).Limit(limit).Offset(offset).Find(&data).Error; err != nil {
 		if errors.Is(err, gorm.ErrRecordNotFound) {
 			log.Printf("%s", err.Error())
 			return nil, 0, err_response.NewNotFoundError("No products found!")
@@ -68,7 +68,7 @@ func (r *productRepository) FindAll(page int, limit int) ([]schema.Product, int6
 func (r *productRepository) FindById(product_id string) (*schema.Product, error) {
 	var product *schema.Product
 
-	if err := r.db.Preload("Category").Preload("Variants").Preload("Variants.Attributes").Preload("Variants.Image").Preload("Thumbail").Preload(clause.Associations).First(&product, "product_id = ?", product_id).Error; err != nil {
+	if err := r.db.Preload("Category").Preload("Variants").Preload("Variants.Attributes").Preload("Variants.Image").Preload("Thumbnail").Preload(clause.Associations).First(&product, "product_id = ?", product_id).Error; err != nil {
 		if errors.Is(err, gorm.ErrRecordNotFound) {
 			log.Printf("%s", err.Error())
 			return nil, err_response.NewNotFoundError("Product not found!")

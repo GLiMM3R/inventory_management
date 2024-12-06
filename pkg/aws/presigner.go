@@ -13,18 +13,29 @@ import (
 // GetObject makes a presigned request that can be used to get an object from a bucket.
 // The presigned request is valid for the specified number of seconds.
 func (s *S3Client) GetObject(
-	ctx context.Context, bucketName string, objectKey string, lifetimeSecs int64) (*v4.PresignedHTTPRequest, error) {
-	request, err := s.presignClient.PresignGetObject(ctx, &s3.GetObjectInput{
-		Bucket: aws.String(bucketName),
-		Key:    aws.String(objectKey),
-	}, func(opts *s3.PresignOptions) {
-		opts.Expires = time.Duration(lifetimeSecs * int64(time.Second))
-	})
+	ctx context.Context, bucketName string, objectKey string, contentType string, lifetimeSecs int64) (*v4.PresignedHTTPRequest, error) {
+	// Create the input for the GetObject request
+	input := &s3.GetObjectInput{
+		Bucket:              aws.String(bucketName),
+		Key:                 aws.String(objectKey),
+		ResponseContentType: aws.String(contentType),
+	}
+
+	// Create the presign options with the specified lifetime
+	presignOptions := func(opts *s3.PresignOptions) {
+		opts.Expires = time.Duration(lifetimeSecs) * time.Second
+	}
+
+	// Generate the presigned request
+	request, err := s.presignClient.PresignGetObject(ctx, input, presignOptions)
 	if err != nil {
+		// Log the error if the presigned request could not be generated
 		log.Printf("Couldn't get a presigned request to get %v:%v. Here's why: %v\n",
 			bucketName, objectKey, err)
+		return nil, err
 	}
-	return request, err
+
+	return request, nil
 }
 
 // PutObject makes a presigned request that can be used to put an object in a bucket.

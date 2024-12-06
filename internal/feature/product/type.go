@@ -38,15 +38,15 @@ type UpdateProductDTO struct {
 }
 
 type ProductListResponse struct {
-	ProductID    string  `json:"product_id"`
-	Name         string  `json:"name"`
-	BasePrice    float64 `json:"base_price"`
-	ThumbnailURL string  `json:"thumbnail_url"`
-	CategoryName string  `json:"category_name"`
-	Description  string  `json:"description"`
-	IsActive     bool    `json:"is_active"`
-	CreatedAt    int64   `json:"created_at"`
-	UpdatedAt    int64   `json:"updated_at"`
+	ProductID    string              `json:"product_id"`
+	Name         string              `json:"name"`
+	BasePrice    float64             `json:"base_price"`
+	Thumbnail    media.MediaResponse `json:"thumbnail"`
+	CategoryName string              `json:"category_name"`
+	Description  string              `json:"description"`
+	IsActive     bool                `json:"is_active"`
+	CreatedAt    int64               `json:"created_at"`
+	UpdatedAt    int64               `json:"updated_at"`
 }
 
 type VariantResponse struct {
@@ -60,7 +60,7 @@ type VariantResponse struct {
 	Status          string              `json:"status"`
 	CreatedAt       int64               `json:"created_at"`
 	UpdatedAt       int64               `json:"updated_at"`
-	ImageURL        string              `json:"image_url"`
+	Image           media.MediaResponse `json:"image"`
 	Attributes      []AttributeResponse `json:"attributes"`
 }
 
@@ -70,15 +70,15 @@ type AttributeResponse struct {
 }
 
 type ProductResponse struct {
-	ProductID    string            `json:"product_id"`
-	Name         string            `json:"name"`
-	BasePrice    float64           `json:"base_price"`
-	ThumbnailURL string            `json:"thumbnail_url"`
-	CategoryID   string            `json:"category_id"`
-	CategoryName string            `json:"category_name"`
-	Description  string            `json:"description"`
-	IsActive     bool              `json:"is_active"`
-	Variants     []VariantResponse `json:"variants"`
-	CreatedAt    int64             `json:"created_at"`
-	UpdatedAt    int64             `json:"updated_at"`
+	ProductID    string              `json:"product_id"`
+	Name         string              `json:"name"`
+	BasePrice    float64             `json:"base_price"`
+	Thumbnail    media.MediaResponse `json:"thumbnail"`
+	CategoryID   string              `json:"category_id"`
+	CategoryName string              `json:"category_name"`
+	Description  string              `json:"description"`
+	IsActive     bool                `json:"is_active"`
+	Variants     []VariantResponse   `json:"variants"`
+	CreatedAt    int64               `json:"created_at"`
+	UpdatedAt    int64               `json:"updated_at"`
 }

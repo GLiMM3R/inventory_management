@@ -59,22 +59,41 @@ func (s *productService) FindAll(page int, limit int) ([]ProductListResponse, in
 			UpdatedAt:    product.UpdatedAt,
 		}
 
-		if product.ThumbnailID != nil {
-			result, err := s.s3Client.GetObject(ctx, s.cfg.AWS_BUCKET_NAME, product.Thumbnail.Path, int64(3600))
-			if err != nil {
-				log.Println(err)
-				continue
+		if product.Thumbnail != nil {
+			exist, err := s.s3Client.CheckObjectExists(ctx, s.cfg.AWS_BUCKET_NAME, product.Thumbnail.Path)
+
+			if !exist || err != nil {
+				log.Println("Thumbnail does not exist or error occurred:", err.Error())
 			}
 
-			response[i].ThumbnailURL = result.URL
+			result, err := s.s3Client.GetObject(ctx, s.cfg.AWS_BUCKET_NAME, product.Thumbnail.Path, product.Thumbnail.Type, int64(3600))
+			if err != nil {
+				log.Println(err)
+			}
+
+			productJSON, err := json.MarshalIndent(result, "", "  ")
+			if err != nil {
+				return nil, 0, err
+			}
+			fmt.Println(string(productJSON))
+
+			response[i].Thumbnail = media.MediaResponse{
+				ID:             product.Thumbnail.ID,
+				Name:           product.Thumbnail.Name,
+				Type:           product.Thumbnail.Type,
+				Path:           product.Thumbnail.Path,
+				Size:           product.Thumbnail.Size,
+				CollectionType: product.Thumbnail.CollectionType,
+				URL:            result.URL,
+			}
 		}
 	}
 
-	productJSON, err := json.MarshalIndent(response, "", "  ")
-	if err != nil {
-		return nil, 0, err
-	}
-	fmt.Println(string(productJSON))
+	// productJSON, err := json.MarshalIndent(response, "", "  ")
+	// if err != nil {
+	// 	return nil, 0, err
+	// }
+	// fmt.Println(string(productJSON))
 
 	return response, total, nil
 }
@@ -102,13 +121,27 @@ func (s *productService) FindByID(product_id string) (*ProductResponse, error) {
 		UpdatedAt:    product.UpdatedAt,
 	}
 
-	if product.ThumbnailID != nil {
-		result, err := s.s3Client.GetObject(ctx, s.cfg.AWS_BUCKET_NAME, product.Thumbnail.Path, int64(3600))
+	if product.Thumbnail != nil {
+		exist, err := s.s3Client.CheckObjectExists(ctx, s.cfg.AWS_BUCKET_NAME, product.Thumbnail.Path)
+
+		if !exist || err != nil {
+			log.Println("Thumbnail does not exist or error occurred:", err.Error())
+		}
+
+		result, err := s.s3Client.GetObject(ctx, s.cfg.AWS_BUCKET_NAME, product.Thumbnail.Path, product.Thumbnail.Type, int64(3600))
 		if err != nil {
 			log.Println(err.Error())
 		}
 
-		response.ThumbnailURL = result.URL
+		response.Thumbnail = media.MediaResponse{
+			ID:             product.Thumbnail.ID,
+			Name:           product.Thumbnail.Name,
+			Type:           product.Thumbnail.Type,
+			Path:           product.Thumbnail.Path,
+			Size:           product.Thumbnail.Size,
+			CollectionType: product.Thumbnail.CollectionType,
+			URL:            result.URL,
+		}
 	}
 
 	for i, variant := range product.Variants {
@@ -126,13 +159,21 @@ func (s *productService) FindByID(product_id string) (*ProductResponse, error) {
 		}
 
 		if variant.Image != nil {
-			result, err := s.s3Client.GetObject(ctx, s.cfg.AWS_BUCKET_NAME, variant.Image.Path, int64(3600))
+			result, err := s.s3Client.GetObject(ctx, s.cfg.AWS_BUCKET_NAME, variant.Image.Path, variant.Image.Type, int64(3600))
 			if err != nil {
 				log.Println(err.Error())
 				continue
 			}
 
-			response.Variants[i].ImageURL = result.URL
+			response.Variants[i].Image = media.MediaResponse{
+				ID:             variant.Image.ID,
+				Name:           variant.Image.Name,
+				Type:           variant.Image.Type,
+				Path:           variant.Image.Path,
+				Size:           variant.Image.Size,
+				CollectionType: variant.Image.CollectionType,
+				URL:            result.URL,
+			}
 		}
 
 		for j, attribute := range variant.Attributes {
@@ -182,7 +223,7 @@ func (s *productService) Update(product_id string, request UpdateProductDTO) err
 		}
 
 		sourcePath := path.Join("tmp", request.Thumbnail.Name)
-		destPath := path.Join("products", product.ProductID, request.Thumbnail.Name)
+		destPath := path.Join("products", request.Thumbnail.Name)
 
 		if err := s.s3Client.CopyToFolder(ctx, s.cfg.AWS_BUCKET_NAME, sourcePath, destPath); err != nil {
 			return err_response.NewInternalServerError()
@@ -226,7 +267,7 @@ func (s *productService) Create(request CreateProductDTO) error {
 	if request.Thumbnail != nil {
 		newMediaID := uuid.NewString()
 		sourcePath := path.Join("tmp", request.Thumbnail.Name)
-		destPath := path.Join("products", newProduct.ProductID, request.Thumbnail.Name)
+		destPath := path.Join("products", request.Thumbnail.Name)
 
 		if err := s.s3Client.CopyToFolder(ctx, s.cfg.AWS_BUCKET_NAME, sourcePath, destPath); err != nil {
 			return err_response.NewInternalServerError()
@@ -257,6 +298,28 @@ func (s *productService) Create(request CreateProductDTO) error {
 			StockQuantity:   variantReq.StockQuantity,
 			RestockLevel:    variantReq.RestockLevel,
 			Attributes:      make([]schema.Attribute, len(variantReq.Attributes)),
+		}
+
+		if variantReq.Image != nil {
+			sourcePath := path.Join("tmp", variantReq.Image.Name)
+			destPath := path.Join("products", newProduct.ProductID, variantReq.Image.Name)
+
+			if err := s.s3Client.CopyToFolder(ctx, s.cfg.AWS_BUCKET_NAME, sourcePath, destPath); err != nil {
+				return err_response.NewInternalServerError()
+			}
+
+			if err := s.s3Client.DeleteObjects(ctx, s.cfg.AWS_BUCKET_NAME, []string{sourcePath}); err != nil {
+				return err_response.NewInternalServerError()
+			}
+
+			newVariant.Image = &schema.Media{
+				ID:             uuid.NewString(),
+				Name:           variantReq.Image.Name,
+				Type:           variantReq.Image.Type,
+				Size:           variantReq.Image.Size,
+				Path:           destPath,
+				CollectionType: variantReq.Image.CollectionType,
+			}
 		}
 
 		for idx, attribute := range variantReq.Attributes {

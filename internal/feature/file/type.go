@@ -16,6 +16,7 @@ type GetObjectRequest struct {
 }
 
 type GetObjectResponse struct {
-	Directory string `json:"directory"`
-	FileName  string `json:"file_name"`
+	URL      string `json:"url"`
+	FileName string `json:"file_name"`
+	FilePath string `json:"file_path"`
 }
