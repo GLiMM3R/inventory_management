@@ -1,9 +1,7 @@
 package config
 
 import (
-	"fmt"
 	"log"
-	"os"
 
 	"github.com/spf13/viper"
 )
@@ -35,22 +33,22 @@ type Config struct {
 
 var AppConfig Config
 
-func init() {
-	fmt.Println("Initializing configuration...")
-	privateBytes, err := os.ReadFile("keys/private.pem")
-	if err != nil {
-		log.Fatalf("Error reading private key: %v", err)
-	}
+// func loadKey() {
+// 	fmt.Println("Initializing configuration...")
+// 	privateBytes, err := os.ReadFile("keys/private.pem")
+// 	if err != nil {
+// 		log.Fatalf("Error reading private key: %v", err)
+// 	}
 
-	AppConfig.PRIVATE_KEY = privateBytes
+// 	AppConfig.PRIVATE_KEY = privateBytes
 
-	publicBytes, err := os.ReadFile("keys/public.pem")
-	if err != nil {
-		log.Fatalf("Error reading public key: %v", err)
-	}
+// 	publicBytes, err := os.ReadFile("keys/public.pem")
+// 	if err != nil {
+// 		log.Fatalf("Error reading public key: %v", err)
+// 	}
 
-	AppConfig.PUBLIC_KEY = publicBytes
-}
+// 	AppConfig.PUBLIC_KEY = publicBytes
+// }
 
 func LoadConfig(path, file string) Config {
 	cfg := &Config{}
@@ -68,6 +66,8 @@ func LoadConfig(path, file string) Config {
 	if err := viper.Unmarshal(&cfg); err != nil {
 		log.Fatalf("Unable to decode into struct, %v", err)
 	}
+
+	// loadKey()
 
 	return *cfg
 }

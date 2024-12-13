@@ -2,7 +2,6 @@ package database
 
 import (
 	"inverntory_management/config"
-	"inverntory_management/internal/database/schema"
 	"log"
 	"os"
 	"time"
@@ -34,25 +33,13 @@ func InitPostgres(cfg config.Config) *gorm.DB {
 	// Initialize GORM with PostgreSQL
 	db, err := gorm.Open(postgres.Open(dsn),
 		&gorm.Config{
-			TranslateError: true, SkipDefaultTransaction: true,
-			Logger:      newLogger,
-			PrepareStmt: true,
+			TranslateError:         true,
+			SkipDefaultTransaction: true,
+			Logger:                 newLogger,
+			PrepareStmt:            true,
 		})
 	if err != nil {
 		panic("Failed to connect database")
-	}
-
-	if err := db.AutoMigrate(
-		&schema.User{},
-		&schema.Category{},
-		&schema.Product{},
-		&schema.ProductVariant{},
-		&schema.Attribute{},
-		&schema.Sale{},
-		&schema.Media{},
-	); err != nil {
-		log.Println("err =>", err.Error())
-		panic("Failed to migrate database")
 	}
 
 	return db

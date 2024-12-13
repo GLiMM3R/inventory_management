@@ -50,7 +50,7 @@ func New(cfg config.Config) *App {
 }
 
 func (a *App) Start(ctx context.Context) {
-	port := fmt.Sprintf(":%d", a.cfg.PORT)
+	port := fmt.Sprintf("0.0.0.0:%d", a.cfg.PORT)
 
 	a.echo.Validator = utils.NewValidator()
 
