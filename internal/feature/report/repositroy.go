@@ -5,7 +5,7 @@ import (
 )
 
 type ReportRepositoryImpl interface {
-	SalesReport(branchID string, startDate, endDate int64, page, limit int) ([]SalesReport, int64, error)
+	SalesReport(startDate, endDate int64, page, limit int) ([]SalesReport, int64, error)
 }
 
 type reportRepository struct {
@@ -17,7 +17,7 @@ func NewReportRepository(db *gorm.DB) ReportRepositoryImpl {
 }
 
 // SalesReport implements IReportRepositoryImpl.
-func (r *reportRepository) SalesReport(branchID string, startDate, endDate int64, page, limit int) ([]SalesReport, int64, error) {
+func (r *reportRepository) SalesReport(startDate, endDate int64, page, limit int) ([]SalesReport, int64, error) {
 	var salesReports []SalesReport
 	var total int64
 	offset := (page - 1) * limit
@@ -25,8 +25,8 @@ func (r *reportRepository) SalesReport(branchID string, startDate, endDate int64
 	query := r.db.Table("sales")
 
 	query = query.Select("sales.order_number as order_number, SUM(sales.total_price) as net_amount", "SUM(sales.quantity) as total_quantity", "sales.sale_date as sale_date").
-		Joins("left join inventories on inventories.inventory_id = sales.fk_inventory_id").
-		Where("inventories.fk_branch_id = ? AND sales.sale_date >= ? AND sales.sale_date <= ?", branchID, startDate, endDate).
+		Joins("left join inventories on inventories.inventory_id = sales.inventory_id").
+		Where("inventories.branch_id = ? AND sales.sale_date >= ? AND sales.sale_date <= ?", startDate, endDate).
 		Group("order_number, sale_date").
 		Count(&total).Limit(limit).Offset(offset).
 		Scan(&salesReports)

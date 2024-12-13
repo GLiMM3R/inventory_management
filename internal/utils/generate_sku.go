@@ -5,7 +5,7 @@ import (
 	"strings"
 )
 
-func GenerateSKU(name string, length int, prefix string) string {
+func GenerateSKU(name string, length int, prefix string, characters int) string {
 	// Convert the name to uppercase
 	upperName := strings.ToUpper(name)
 
@@ -19,8 +19,8 @@ func GenerateSKU(name string, length int, prefix string) string {
 	// Take the first 4 characters of each word
 	var skuParts []string
 	for _, word := range words {
-		if len(word) > 4 {
-			skuParts = append(skuParts, word[:4])
+		if len(word) > characters {
+			skuParts = append(skuParts, word[:characters])
 		} else {
 			skuParts = append(skuParts, word)
 		}

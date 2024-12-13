@@ -1,35 +1,51 @@
 package main
 
 import (
+	"context"
 	"fmt"
 	"inverntory_management/config"
 	"inverntory_management/internal/app"
+	"inverntory_management/internal/database/migration"
+	"os"
+	"os/signal"
+
+	"github.com/spf13/cobra"
 )
 
 func main() {
 	// Initialize the application
-	e, err := app.Initialize()
-	if err != nil {
-		panic(fmt.Sprintf("Failed to initialize application: %v", err))
+	cfg := config.LoadConfig(".", ".env")
+
+	cmd := &cobra.Command{
+		Short: "Start the inventory management application",
 	}
 
-	port := fmt.Sprintf(":%d", config.AppConfig.PORT)
+	start := &cobra.Command{
+		Use:   "start",
+		Short: "Start the application",
+		Run: func(cmd *cobra.Command, args []string) {
+			app := app.New(cfg)
 
-	e.Logger.Fatal(e.Start(port))
-	// ctx, stop := signal.NotifyContext(context.Background(), os.Interrupt)
-	// defer stop()
-	// // Start server
-	// go func() {
-	// 	if err := e.Start(port); err != nil && err != http.ErrServerClosed {
-	// 		e.Logger.Fatal("shutting down the server")
-	// 	}
-	// }()
+			ctx, cancel := signal.NotifyContext(context.Background(), os.Interrupt)
+			defer cancel()
 
-	// // Wait for interrupt signal to gracefully shutdown the server with a timeout of 10 seconds.
-	// <-ctx.Done()
-	// ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
-	// defer cancel()
-	// if err := e.Shutdown(ctx); err != nil {
-	// 	e.Logger.Fatal(err)
-	// }
+			app.Start(ctx)
+		},
+	}
+
+	database_migration := &cobra.Command{
+		Use:   "migrate",
+		Short: "Run Database Migration",
+		Run: func(cmd *cobra.Command, args []string) {
+			migrate := migration.New(cfg)
+			migrate.Run()
+		},
+	}
+
+	cmd.AddCommand(start, database_migration)
+
+	if err := cmd.Execute(); err != nil {
+		fmt.Println(err)
+		os.Exit(1)
+	}
 }

@@ -5,6 +5,7 @@ import (
 
 	"inverntory_management/internal/database/schema"
 	"inverntory_management/internal/exception"
+	custom "inverntory_management/pkg/errors"
 
 	"gorm.io/gorm"
 )
@@ -28,7 +29,7 @@ func NewUserRepository(db *gorm.DB) UserRepositoryImpl {
 // Create implements UserRepository.
 func (r *userRepository) Create(user *schema.User) error {
 	if err := r.db.Create(&user).Error; err != nil {
-		if errors.Is(gorm.ErrDuplicatedKey, err) {
+		if errors.Is(err, gorm.ErrDuplicatedKey) {
 			return exception.ErrDuplicateEntry
 		}
 		return exception.ErrInternal
@@ -43,9 +44,9 @@ func (r *userRepository) FindByID(user_id string) (*schema.User, error) {
 
 	if err := r.db.First(&user, "user_id = ?", user_id).Error; err != nil {
 		if errors.Is(err, gorm.ErrRecordNotFound) {
-			return nil, exception.ErrNotFound
+			return nil, custom.NewDataNotFoundError("user not found")
 		}
-		return nil, exception.ErrInternal
+		return nil, custom.NewInternalServerError()
 	}
 
 	return user, nil
@@ -57,9 +58,10 @@ func (r *userRepository) FindByUsername(username string) (*schema.User, error) {
 
 	if err := r.db.First(&user, "username = ?", username).Error; err != nil {
 		if errors.Is(err, gorm.ErrRecordNotFound) {
-			return nil, exception.ErrNotFound
+			return nil, custom.NewDataNotFoundError("user not found")
 		}
-		return nil, exception.ErrInternal
+
+		return nil, custom.NewInternalServerError()
 	}
 
 	return user, nil
@@ -83,7 +85,7 @@ func (r *userRepository) GetAll(page int, limit int) ([]schema.User, int64, erro
 // Update implements UserRepository.
 func (r *userRepository) Update(user *schema.User) error {
 	if err := r.db.Save(&user).Error; err != nil {
-		if errors.Is(gorm.ErrDuplicatedKey, err) {
+		if errors.Is(err, gorm.ErrDuplicatedKey) {
 			return exception.ErrDuplicateEntry
 		}
 		return exception.ErrInternal

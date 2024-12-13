@@ -1,66 +1,88 @@
 package app
 
 import (
+	"context"
+	"fmt"
 	"inverntory_management/config"
 	"inverntory_management/internal/database"
-	"inverntory_management/internal/feature/auth"
-	"inverntory_management/internal/feature/branch"
-	"inverntory_management/internal/feature/inventory"
-	"inverntory_management/internal/feature/inventory_transfer"
-	"inverntory_management/internal/feature/price"
-	"inverntory_management/internal/feature/report"
-	"inverntory_management/internal/feature/sale"
-	user "inverntory_management/internal/feature/user"
+	custom_middlware "inverntory_management/internal/middleware"
 	"inverntory_management/internal/utils"
+	aws_service "inverntory_management/pkg/aws"
+	"log"
+	"net/http"
+	"time"
 
 	"github.com/labstack/echo"
 	"github.com/labstack/echo/middleware"
+	"github.com/redis/go-redis/v9"
+	"gorm.io/gorm"
 )
 
-func Initialize() (*echo.Echo, error) {
-	// Load Configuration
-	config.LoadConfig(".")
+type App struct {
+	echo        *echo.Echo
+	cfg         config.Config
+	db          *gorm.DB
+	redisClient *redis.Client
+	s3Client    *aws_service.S3Client
+}
 
-	e := echo.New()
+func New(cfg config.Config) *App {
+	s3Client, err := aws_service.NewS3Client(aws_service.Config{
+		Region:          cfg.AWS_BUCKET_REGION,
+		Endpoint:        cfg.AWS_ENDPOINT,
+		AccessKeyID:     cfg.AWS_ACCESS_KEY_ID,
+		SecretAccessKey: cfg.AWS_SECRET_ACCESS_KEY,
+	})
 
-	e.Validator = utils.NewValidator()
+	if err != nil {
+		log.Println("Error initializing S3 client: ", err)
+	}
+
+	app := &App{
+		echo:        echo.New(),
+		cfg:         cfg,
+		db:          database.InitPostgres(cfg),
+		redisClient: database.InitRedis(cfg),
+		s3Client:    s3Client,
+	}
+
+	return app
+}
+
+func (a *App) Start(ctx context.Context) {
+	port := fmt.Sprintf("0.0.0.0:%d", a.cfg.PORT)
+
+	a.echo.Validator = utils.NewValidator()
 
 	// Middleware
-	e.Use(middleware.Logger())
-	e.Use(middleware.Recover())
+	a.echo.Use(middleware.CORS())
+	a.echo.Use(middleware.Logger())
+	a.echo.Use(middleware.Recover())
+	a.echo.Use(custom_middlware.ErrorHandler)
 
-	// Initialize database
-	database.InitPostgres()
-	redisClient := database.InitRedis()
+	err := a.redisClient.Ping(ctx).Err()
+	if err != nil {
+		log.Println("Error pinging Redis: ", err)
+	}
 
-	// Initialize Repositories
-	userRepo := user.NewUserRepository(database.DB)
-	branchRepo := branch.NewBranchRepository(database.DB)
-	inventoryRepo := inventory.NewInventoryRepository(database.DB)
-	priceRepo := price.NewPriceRepository(database.DB)
-	saleRepo := sale.NewSaleRepository(database.DB)
-	transferRepo := inventory_transfer.NewInventoryTransferRepository(database.DB)
-	reportRepo := report.NewReportRepository(database.DB)
+	repo := a.initRepositories()
+	services := a.initServices(repo)
+	a.initRoutes(services)
 
-	// Initialize Services
-	authService := auth.NewAuthService(userRepo, redisClient)
-	userService := user.NewUserService(userRepo)
-	branchService := branch.NewBranchService(branchRepo, userRepo)
-	inventoryService := inventory.NewInventoryService(inventoryRepo, userRepo, priceRepo)
-	priceService := price.NewPriceService(priceRepo)
-	saleService := sale.NewSaleService(saleRepo)
-	transferService := inventory_transfer.NewInventoryService(transferRepo, userRepo)
-	reportService := report.NewReportService(reportRepo, userRepo)
+	fmt.Println("Starting server...")
 
-	// Initialize Routes
-	auth.InitAuthRoutes(e, authService)
-	user.InitUserRoutes(e, userService)
-	branch.InitBranchRoutes(e, branchService)
-	inventory.InitInventoryRoutes(e, inventoryService)
-	price.InitPriceRoutes(e, priceService)
-	sale.InitSaleRoutes(e, saleService)
-	inventory_transfer.InitInventoryTransferRoutes(e, transferService)
-	report.InitReportRoutes(e, reportService)
+	// Start server
+	go func() {
+		if err := a.echo.Start(port); err != nil && err != http.ErrServerClosed {
+			a.echo.Logger.Fatal("shutting down the server")
+		}
+	}()
 
-	return e, nil
+	// Wait for interrupt signal to gracefully shut down the server with a timeout of 10 seconds.
+	<-ctx.Done()
+	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
+	defer cancel()
+	if err := a.echo.Shutdown(ctx); err != nil {
+		a.echo.Logger.Fatal(err)
+	}
 }

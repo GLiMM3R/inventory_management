@@ -62,7 +62,6 @@ func (s *saleService) Create(dto SaleCreateDto) error {
 			defer wg.Done()
 			newSale := &schema.Sale{
 				SaleID:      uuid.NewString(),
-				InventoryID: item.InventoryID,
 				OrderNumber: orderNumber,
 				Quantity:    item.Quantity,
 				SaleDate:    saleDate,
